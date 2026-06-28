@@ -38,6 +38,9 @@ PANIERS = [
     ("FTSEMIB.MI", "FTSE MIB",         "panier", "#FF5470", False),  # Italie
     ("^IBEX",      "IBEX 35",          "panier", "#9D7CFF", False),  # Espagne
     ("^AEX",       "AEX",              "panier", "#6FE26F", False),  # Pays-Bas
+    # --- emergents (hors zone euro, ETF Amundi PEA synthetiques, pour comparaison) ---
+    ("PAEEM.PA",   "PAEEM - Emergents","panier", "#FF8C42", False),  # Amundi PEA MSCI Emerging (monde) FR0013412020, TER 0,30%
+    ("PAASI.PA",   "PAASI - Asie em.", "panier", "#B7E04B", False),  # Amundi PEA MSCI Emerging Asia FR0013412012, TER ~0,30%
 ]
 
 # ----------------------------------------------------------------------------
