@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Telemesure boursiere — Zone euro / PEA</title>
+<style>
+  :root{
+    --bg:#080B0F;--panel:#0E141B;--panel2:#121A22;--ink:#D7E2E0;
+    --dim:#6F8088;--dimmer:#46555C;--teal:#00E5C7;--line:rgba(120,160,170,0.14);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink)}
+  body{font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;padding:18px 14px 40px;max-width:1080px;margin:0 auto;}
+  .eyebrow{font-family:ui-monospace,monospace;font-size:11px;letter-spacing:.28em;
+    text-transform:uppercase;color:var(--teal);opacity:.85;}
+  h1{margin:6px 0 0;font-size:clamp(22px,5.2vw,32px);font-weight:650;letter-spacing:-.01em;line-height:1.05;}
+  .sub{color:var(--dim);font-size:13.5px;max-width:62ch;line-height:1.5;margin-top:6px}
+  .sub b{color:var(--ink);font-weight:600}
+  .controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:16px 0 10px;}
+  .seg{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .seg button{background:transparent;border:0;color:var(--dim);font-family:ui-monospace,monospace;
+    font-size:12px;letter-spacing:.04em;padding:8px 14px;cursor:pointer;transition:.15s;}
+  .seg button.on{background:var(--panel2);color:var(--teal)}
+  .seg button:not(.on):hover{color:var(--ink)}
+  .refresh{margin-left:auto;background:var(--panel);border:1px solid var(--line);color:var(--dim);
+    font-family:ui-monospace,monospace;font-size:12px;padding:8px 12px;border-radius:10px;cursor:pointer;}
+  .refresh:hover{color:var(--teal);border-color:rgba(0,229,199,.4)}
+  .scope{position:relative;background:radial-gradient(120% 90% at 50% 0%, rgba(0,229,199,.04), transparent 60%),var(--panel);
+    border:1px solid var(--line);border-radius:14px;padding:10px 6px 6px;box-shadow:inset 0 0 60px rgba(0,0,0,.5);}
+  canvas{display:block;width:100%;height:auto;touch-action:pan-y}
+  .status{font-family:ui-monospace,monospace;font-size:11.5px;color:var(--dim);padding:8px 6px 2px;min-height:18px;}
+  .status .err{color:#FF7A8A}
+  .legend{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:6px 14px;margin-top:14px;}
+  .lg{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:9px;border:1px solid transparent;
+    cursor:pointer;transition:.12s;background:var(--panel);}
+  .lg:hover{border-color:var(--line)}
+  .lg.off{opacity:.32}
+  .swatch{width:11px;height:11px;border-radius:3px;flex:none;box-shadow:0 0 8px currentColor}
+  .lg .nm{font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
+  .lg .tk{font-family:ui-monospace,monospace;font-size:10.5px;color:var(--dimmer);display:block;font-weight:400}
+  .lg .pct{font-family:ui-monospace,monospace;font-size:12.5px;font-weight:600;flex:none}
+  .up{color:#54E0A0}.down{color:#FF7A8A}.flat{color:var(--dim)}
+  .notes{margin-top:22px;border-top:1px solid var(--line);padding-top:14px;color:var(--dim);font-size:12.5px;line-height:1.6}
+  .notes b{color:var(--ink)}
+  /* --- vue Gain net --- */
+  .params{display:none;flex-wrap:wrap;gap:10px 14px;align-items:flex-end;margin:0 0 12px;
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;}
+  .params.show{display:flex}
+  .fld{display:flex;flex-direction:column;gap:5px}
+  .fld label{font-family:ui-monospace,monospace;font-size:10.5px;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--dimmer)}
+  .fld input,.fld select{background:var(--panel2);border:1px solid var(--line);color:var(--ink);
+    font-family:ui-monospace,monospace;font-size:13px;padding:8px 10px;border-radius:8px;}
+  .fld input{width:120px}
+  .seuil{font-family:ui-monospace,monospace;font-size:11.5px;color:var(--dim);margin-left:auto;align-self:center;}
+  .seuil b{color:var(--teal)}
+  .tblwrap{display:none;overflow-x:auto;-webkit-overflow-scrolling:touch;
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;}
+  .tblwrap.show{display:block}
+  table.gn{width:100%;border-collapse:collapse;font-size:12.5px;min-width:440px}
+  table.gn th,table.gn td{padding:9px 12px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line)}
+  table.gn th{font-family:ui-monospace,monospace;font-size:10px;letter-spacing:.05em;text-transform:uppercase;
+    color:var(--dimmer);text-align:right;position:sticky;top:0;background:var(--panel)}
+  table.gn td.nm,table.gn th.nm{text-align:left}
+  table.gn td.nm{font-weight:600}
+  table.gn td.nm .tk{font-family:ui-monospace,monospace;font-size:10px;color:var(--dimmer);display:block;font-weight:400}
+  table.gn tr:last-child td{border-bottom:0}
+  table.gn .net{font-family:ui-monospace,monospace;font-weight:700}
+  table.gn .mono{font-family:ui-monospace,monospace;color:var(--dim)}
+  table.gn .ttf{color:#FFB000}
+</style>
+</head>
+<body>
+  <span class="eyebrow">Performance relative · base 100</span>
+  <h1>Zone euro &amp; PEA — 6 mois</h1>
+  <p class="sub">Chaque trace est ramenee a <b>100</b> a sa premiere seance de la fenetre. Onglet <b>Paniers</b> : indices zone euro (agregats deja constitues). Onglet <b>Valeurs</b> : titres individuels eligibles PEA, allumables/eteignables d'un clic dans la legende. Tout est en <b>EUR</b> : aucun effet de change. Donnees Yahoo Finance, mises a jour chaque jour ouvre par GitHub Actions.</p>
+
+  <div class="controls">
+    <div class="seg" id="tabSeg">
+      <button data-t="panier" class="on">Paniers</button>
+      <button data-t="valeur">Valeurs</button>
+    </div>
+    <div class="seg" id="viewSeg">
+      <button data-v="chart" class="on">Courbes</button>
+      <button data-v="net">Gain net</button>
+    </div>
+    <button class="refresh" id="refreshBtn">&#8635; Recharger</button>
+  </div>
+
+  <div class="params" id="params">
+    <div class="fld">
+      <label>Montant / ligne (EUR)</label>
+      <input id="montant" type="number" min="0" step="100" value="1000">
+    </div>
+    <div class="fld">
+      <label>Courtage</label>
+      <select id="scenario">
+        <option value="standard">Standard · 0,50 % A + 0,50 % V</option>
+        <option value="boursomarkets">BoursoMarkets · achat 0 %, vente 0,50 %</option>
+      </select>
+    </div>
+    <div class="fld">
+      <label>Fiscalite</label>
+      <select id="fisc">
+        <option value="0">Arbitrage interne · 0 impot</option>
+        <option value="0.172">Retrait PEA &gt; 5 ans · 17,2 %</option>
+        <option value="0.30">Retrait PEA &lt; 5 ans · 30 %</option>
+      </select>
+    </div>
+    <div class="seuil" id="seuil"></div>
+  </div>
+
+  <div class="scope" id="scope">
+    <canvas id="cv"></canvas>
+    <div class="status" id="status">Chargement de data.json...</div>
+  </div>
+
+  <div class="tblwrap" id="tblwrap"></div>
+
+  <div class="legend" id="legend"></div>
+
+
+  <div class="notes">
+    <p><b>Lecture.</b> Onglet Paniers : l'<b>EuroStoxx 50</b> (en gras) sert de reference zone euro ; le <b>MSCI EMU</b> elargit a ~225 valeurs de la zone, le <b>MSCI Europe</b> et le <b>Stoxx Europe 600</b> ouvrent a l'Europe large. Le CAC 40, le DAX, le FTSE MIB, l'IBEX 35 et l'AEX donnent la rotation entre places. Attention : les lignes ETF (CEMU, PCEU, MEUD) et le DAX sont en <b>total return</b>, les indices prix non — d'ou une legere derive (voir README). Onglet Valeurs : amorce sur Air Liquide, Sanofi et Pernod Ricard, complete d'un fond de grandes capi zone euro a retirer selon tes convictions (edite la liste <b>VALEURS</b> dans <b>scripts/fetch_data.py</b>).</p>
+    <p><b>Vue Gain net.</b> Simule un aller-retour achat puis revente sur la fenetre, net des frais d'un PEA BoursoBank : courtage plafonne a <b>0,50 % par ordre</b> (~1 % A/R), <b>0 droit de garde</b>, et <b>TTF 0,40 % a l'achat</b> sur les actions francaises &gt; 1 Md&euro; (jamais sur ETF, indices, ni titres etrangers comme ASML/SAP). Le scenario <b>BoursoMarkets</b> met l'achat d'ETF a 0 % (la revente reste a 0,50 %). Par defaut, <b>arbitrage interne au PEA = 0 impot</b> ; le selecteur fiscalite simule un retrait (17,2 % si PEA &gt; 5 ans, 30 % sinon). Le TER de l'ETF n'est pas ajoute : il est deja dans le cours (les lignes ETF sont en total return).</p>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+  var state={tab:"panier",view:"chart",off:{},series:[]};
+  var cv=document.getElementById("cv"),ctx=cv.getContext("2d");
+  var statusEl=document.getElementById("status"),legendEl=document.getElementById("legend");
+  var scopeEl=document.getElementById("scope"),tblEl=document.getElementById("tblwrap");
+  var paramsEl=document.getElementById("params"),seuilEl=document.getElementById("seuil");
+  var montantEl=document.getElementById("montant"),scenarioEl=document.getElementById("scenario"),fiscEl=document.getElementById("fisc");
+  var hover=null;
+
+  // --- Frais PEA BoursoBank ---
+  // Courtage plafonne au max legal 0,50% sur PEA (forfait Decouverte : 1,99 EUR < 500 EUR,
+  // 0,60% au-dela, le tout plafonne a 0,50%). Pas de droits de garde ni frais de tenue.
+  // TTF 0,40% a l'achat sur actions FR > 1 Md EUR (pas sur ETF, indices, ni titres etrangers).
+  var COURTAGE_PLAFOND=0.005, COURTAGE_FORFAIT=1.99, COURTAGE_SEUIL=500, COURTAGE_TAUX=0.006, TTF=0.004;
+
+  function courtage(montant){
+    if(montant<=0) return 0;
+    var base=montant<COURTAGE_SEUIL?COURTAGE_FORFAIT:COURTAGE_TAUX*montant;
+    return Math.min(base, COURTAGE_PLAFOND*montant);
+  }
+  function isFR(s){ return s.tab==="valeur" && /\.PA$/.test(s.tk); } // action FR cotee Paris -> TTF
+  function ttfDue(s,m){ return isFR(s)?TTF*m:0; }
+
+  // Gain net d'un aller-retour pour une serie, montant m engage a l'achat.
+  function netGain(s){
+    var m=Math.max(0, parseFloat(montantEl.value)||0);
+    var scenario=scenarioEl.value, taxRate=parseFloat(fiscEl.value)||0;
+    var ratio=1+(s.pct/100);                                  // P1/P0 sur la fenetre
+    var ttf=ttfDue(s,m);
+    var cBuy=(scenario==="boursomarkets" && s.tab==="panier")?0:courtage(m); // BoursoMarkets : achat ETF gratuit
+    var costIn=m+cBuy+ttf;                                     // capital reellement engage
+    var grossOut=m*ratio;                                      // valeur a la revente, avant frais
+    var cSell=courtage(grossOut);
+    var proceeds=grossOut-cSell;
+    var gainBrut=proceeds-costIn;                              // gain net de frais, avant impot
+    var gain=(taxRate>0 && gainBrut>0)?gainBrut*(1-taxRate):gainBrut;
+    return {m:m,ratio:ratio,fraisAR:cBuy+cSell+ttf,cBuy:cBuy,cSell:cSell,ttf:ttf,
+            gain:gain,gainBrut:gainBrut,pctNet:costIn>0?gain/costIn*100:0,costIn:costIn};
+  }
+
+  function load(){
+    statusEl.innerHTML="Chargement de data.json...";
+    fetch("./data.json?t="+Date.now()).then(function(r){
+      if(!r.ok) throw 0; return r.json();
+    }).then(function(j){
+      state.series=j.series||[];
+      var d=j.generated?new Date(j.generated):null;
+      var stamp=d?d.toLocaleString("fr-FR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"?";
+      statusEl.innerHTML=state.series.length+" series · maj "+stamp;
+      buildLegend(); setView();
+    }).catch(function(){
+      statusEl.innerHTML="<span class='err'>data.json introuvable.</span> Lance le workflow GitHub Actions (onglet Actions > Run workflow) pour le generer.";
+    });
+  }
+
+  function visible(){
+    return state.series.filter(function(s){
+      if(!s.x||!s.x.length) return false;
+      if(state.off[s.tk]) return false;
+      if(s.tab!==state.tab) return false;
+      return true;
+    });
+  }
+
+  function buildLegend(){
+    var inT=state.series.filter(function(s){return s.tab===state.tab;});
+    legendEl.innerHTML="";
+    inT.forEach(function(s){
+      var d=document.createElement("div");
+      d.className="lg"+(state.off[s.tk]?" off":"");
+      var pctTxt=(s.pct>=0?"+":"")+Number(s.pct).toFixed(1)+"%";
+      var cls=s.pct>0.05?"up":(s.pct<-0.05?"down":"flat");
+      d.innerHTML='<span class="swatch" style="background:'+s.col+';color:'+s.col+'"></span>'+
+        '<span class="nm">'+s.name+'<span class="tk">'+s.tk+'</span></span>'+
+        '<span class="pct '+cls+'">'+pctTxt+'</span>';
+      d.onclick=function(){state.off[s.tk]=!state.off[s.tk];buildLegend();draw();};
+      legendEl.appendChild(d);
+    });
+  }
+
+  function eur(v){
+    var sign=v<0?"-":(v>0?"+":"");
+    return sign+Math.abs(v).toLocaleString("fr-FR",{minimumFractionDigits:0,maximumFractionDigits:0})+" EUR";
+  }
+
+  // Tableau "Gain net" : aller-retour achat->revente, net de frais PEA (et d'impot si retrait).
+  function renderTable(){
+    var rows=state.series.filter(function(s){return s.tab===state.tab && s.x && s.x.length;})
+      .map(function(s){return {s:s, r:netGain(s)};})
+      .sort(function(a,c){return c.r.gain-a.r.gain;});
+
+    // Seuil de rentabilite : perf brute qui annule le gain net, avec les frais courants.
+    var m=Math.max(0,parseFloat(montantEl.value)||0);
+    var sample=rows.length?rows[0].s:{tab:state.tab,tk:""};
+    var cBuy=(scenarioEl.value==="boursomarkets"&&sample.tab==="panier")?0:courtage(m);
+    var ttf=ttfDue(sample,m), costIn=m+cBuy+ttf;
+    // break-even : grossOut*(1 - courtage vente) = costIn, avec courtage vente ~0,50%
+    var seuilPct=m>0?((costIn/((1-COURTAGE_PLAFOND)*m) -1)*100):0;
+    seuilEl.innerHTML="Seuil de rentabilite "+(sample.tab==="valeur"?"(hors actions etrangeres) ":"")+
+      "&asymp; <b>+"+seuilPct.toFixed(2)+"%</b> de perf brute";
+
+    var taxOn=parseFloat(fiscEl.value)>0;
+    var h='<table class="gn"><thead><tr>'+
+      '<th class="nm">Valeur</th><th>Brut</th><th>Frais A/R</th>'+
+      '<th>Gain net'+(taxOn?" (net impot)":"")+'</th><th>%</th></tr></thead><tbody>';
+    rows.forEach(function(o){
+      var s=o.s,r=o.r;
+      var g=r.gain, cls=g>0.5?"up":(g<-0.5?"down":"flat");
+      var fr=(r.ttf>0?'<span class="ttf" title="dont TTF '+eur(-r.ttf)+'">':'')+
+             Math.round(r.fraisAR).toLocaleString("fr-FR")+" EUR"+(r.ttf>0?'</span>':'');
+      h+='<tr><td class="nm">'+s.name+'<span class="tk">'+s.tk+'</span></td>'+
+         '<td class="mono">'+(s.pct>=0?"+":"")+Number(s.pct).toFixed(1)+'%</td>'+
+         '<td class="mono">'+fr+'</td>'+
+         '<td class="net '+cls+'">'+eur(g)+'</td>'+
+         '<td class="net '+cls+'">'+(r.pctNet>=0?"+":"")+r.pctNet.toFixed(2)+'%</td></tr>';
+    });
+    h+='</tbody></table>';
+    tblEl.innerHTML=h;
+  }
+
+  function setView(){
+    var net=state.view==="net";
+    scopeEl.style.display=net?"none":"";
+    tblEl.classList.toggle("show",net);
+    paramsEl.classList.toggle("show",net);
+    if(net){renderTable();} else {resize();}
+  }
+
+  var DPR=Math.max(1,Math.min(3,window.devicePixelRatio||1));
+  var PADL=44,PADR=14,PADT=14,PADB=26;
+
+  function resize(){
+    var cssW=cv.clientWidth||cv.parentNode.clientWidth-12;
+    var cssH=Math.max(280,Math.min(460,Math.round(cssW*0.56)));
+    cv.style.height=cssH+"px";
+    cv.width=Math.round(cssW*DPR);cv.height=Math.round(cssH*DPR);
+    ctx.setTransform(DPR,0,0,DPR,0,0);draw();
+  }
+
+  function bounds(vis){
+    var tmin=Infinity,tmax=-Infinity,vmin=Infinity,vmax=-Infinity;
+    vis.forEach(function(s){
+      for(var i=0;i<s.x.length;i++){
+        if(s.x[i]<tmin)tmin=s.x[i];if(s.x[i]>tmax)tmax=s.x[i];
+        if(s.y[i]<vmin)vmin=s.y[i];if(s.y[i]>vmax)vmax=s.y[i];
+      }
+    });
+    if(!isFinite(vmin)){vmin=90;vmax=110;}
+    var pad=(vmax-vmin)*0.08||5;return {tmin:tmin,tmax:tmax,vmin:vmin-pad,vmax:vmax+pad};
+  }
+
+  function draw(){
+    var cssW=cv.clientWidth,cssH=cv.clientHeight;
+    ctx.clearRect(0,0,cssW,cssH);
+    var vis=visible(),b=bounds(vis);
+    var plotW=cssW-PADL-PADR,plotH=cssH-PADT-PADB;
+    function X(t){return PADL+(t-b.tmin)/(b.tmax-b.tmin||1)*plotW;}
+    function Y(v){return PADT+(1-(v-b.vmin)/(b.vmax-b.vmin||1))*plotH;}
+
+    ctx.font="10px ui-monospace,monospace";ctx.textBaseline="middle";
+    var step=niceStep(b.vmin,b.vmax,5),start=Math.ceil(b.vmin/step)*step;
+    for(var v=start;v<=b.vmax;v+=step){
+      var y=Y(v),is100=Math.abs(v-100)<0.001;
+      ctx.strokeStyle=is100?"rgba(255,210,63,.32)":"rgba(94,234,212,.07)";ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(PADL,y);ctx.lineTo(cssW-PADR,y);ctx.stroke();
+      ctx.fillStyle=is100?"rgba(255,210,63,.7)":"#46555C";ctx.textAlign="right";
+      ctx.fillText(v.toFixed(0),PADL-8,y);
+    }
+    var months=monthTicks(b.tmin,b.tmax);
+    ctx.textAlign="center";ctx.textBaseline="top";
+    months.forEach(function(m){
+      var x=X(m.t);
+      ctx.strokeStyle="rgba(94,234,212,.06)";ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(x,PADT);ctx.lineTo(x,cssH-PADB);ctx.stroke();
+      ctx.fillStyle="#46555C";ctx.fillText(m.label,x,cssH-PADB+6);
+    });
+
+    vis.forEach(function(s){
+      ctx.beginPath();
+      for(var i=0;i<s.x.length;i++){
+        var x=X(s.x[i]),y=Y(s.y[i]);
+        if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+      }
+      ctx.lineJoin="round";ctx.strokeStyle=s.col;ctx.globalAlpha=0.9;
+      ctx.shadowColor=s.col;ctx.shadowBlur=s.hero?9:5;ctx.lineWidth=s.hero?2.4:1.3;
+      ctx.stroke();ctx.shadowBlur=0;ctx.globalAlpha=1;
+    });
+
+    if(hover!=null && vis.length){
+      var tx=b.tmin+(hover-PADL)/plotW*(b.tmax-b.tmin);
+      if(hover>=PADL && hover<=cssW-PADR){
+        ctx.strokeStyle="rgba(215,226,224,.22)";ctx.lineWidth=1;
+        ctx.beginPath();ctx.moveTo(hover,PADT);ctx.lineTo(hover,cssH-PADB);ctx.stroke();
+        var rows=[];
+        vis.forEach(function(s){
+          var bi=0,bd=Infinity;
+          for(var i=0;i<s.x.length;i++){var dd=Math.abs(s.x[i]-tx);if(dd<bd){bd=dd;bi=i;}}
+          var nv=s.y[bi];rows.push({s:s,nv:nv});
+          ctx.fillStyle=s.col;ctx.shadowColor=s.col;ctx.shadowBlur=6;
+          ctx.beginPath();ctx.arc(X(s.x[bi]),Y(nv),2.6,0,7);ctx.fill();ctx.shadowBlur=0;
+        });
+        rows.sort(function(a,c){return c.nv-a.nv;});
+        var dt=new Date(tx),lbl=("0"+dt.getDate()).slice(-2)+"/"+("0"+(dt.getMonth()+1)).slice(-2);
+        var bw=132,bx=hover>cssW/2?hover-bw-10:hover+10,by=PADT+4,bh=18+rows.length*15;
+        ctx.fillStyle="rgba(8,11,15,.92)";ctx.strokeStyle="rgba(94,234,212,.25)";
+        roundRect(bx,by,bw,bh,7);ctx.fill();ctx.stroke();
+        ctx.textAlign="left";ctx.textBaseline="top";
+        ctx.fillStyle="#6F8088";ctx.font="10px ui-monospace,monospace";ctx.fillText(lbl,bx+9,by+5);
+        rows.forEach(function(r,i){
+          var yy=by+18+i*15;
+          ctx.fillStyle=r.s.col;ctx.fillRect(bx+9,yy+3,7,7);
+          ctx.fillStyle="#D7E2E0";ctx.font="10px ui-monospace,monospace";ctx.fillText(r.s.tk,bx+22,yy);
+          ctx.textAlign="right";ctx.fillStyle=(r.nv>=100?"#54E0A0":"#FF7A8A");
+          ctx.fillText(r.nv.toFixed(1),bx+bw-9,yy);ctx.textAlign="left";
+        });
+      }
+    }
+  }
+
+  function roundRect(x,y,w,h,r){
+    ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();
+  }
+  function niceStep(min,max,n){
+    var raw=(max-min)/n,mag=Math.pow(10,Math.floor(Math.log(raw)/Math.LN10)),norm=raw/mag,step;
+    if(norm<1.5)step=1;else if(norm<3)step=2;else if(norm<7)step=5;else step=10;return step*mag;
+  }
+  function monthTicks(tmin,tmax){
+    var out=[],d=new Date(tmin);d.setDate(1);d.setHours(0,0,0,0);
+    var names=["jan","fev","mar","avr","mai","juin","juil","aout","sep","oct","nov","dec"];
+    while(d.getTime()<=tmax){
+      if(d.getTime()>=tmin)out.push({t:d.getTime(),label:names[d.getMonth()]});
+      d.setMonth(d.getMonth()+1);
+    }
+    return out;
+  }
+
+  function onMove(e){
+    var rect=cv.getBoundingClientRect();
+    var cx=(e.touches?e.touches[0].clientX:e.clientX)-rect.left;hover=cx;draw();
+  }
+  function onLeave(){hover=null;draw();}
+  cv.addEventListener("mousemove",onMove);
+  cv.addEventListener("mouseleave",onLeave);
+  cv.addEventListener("touchstart",onMove,{passive:true});
+  cv.addEventListener("touchmove",onMove,{passive:true});
+  cv.addEventListener("touchend",onLeave);
+
+  document.getElementById("tabSeg").addEventListener("click",function(e){
+    var btn=e.target.closest("button");if(!btn)return;
+    state.tab=btn.getAttribute("data-t");
+    var bs=this.querySelectorAll("button");
+    for(var i=0;i<bs.length;i++)bs[i].classList.toggle("on",bs[i]===btn);
+    buildLegend();
+    if(state.view==="net") renderTable(); else resize();
+  });
+  document.getElementById("viewSeg").addEventListener("click",function(e){
+    var btn=e.target.closest("button");if(!btn)return;
+    state.view=btn.getAttribute("data-v");
+    var bs=this.querySelectorAll("button");
+    for(var i=0;i<bs.length;i++)bs[i].classList.toggle("on",bs[i]===btn);
+    setView();
+  });
+  [montantEl,scenarioEl,fiscEl].forEach(function(el){
+    el.addEventListener("input",function(){ if(state.view==="net") renderTable(); });
+    el.addEventListener("change",function(){ if(state.view==="net") renderTable(); });
+  });
+  document.getElementById("refreshBtn").addEventListener("click",load);
+  window.addEventListener("resize",function(){ if(state.view!=="net") resize(); });
+
+  load();
+})();
+</script>
+</body>
+</html>
