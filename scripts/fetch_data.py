@@ -41,6 +41,8 @@ PANIERS = [
     # --- emergents (hors zone euro, ETF Amundi PEA synthetiques, pour comparaison) ---
     ("PAEEM.PA",   "PAEEM - Emergents","panier", "#FF8C42", False),  # Amundi PEA MSCI Emerging (monde) FR0013412020, TER 0,30%
     ("PAASI.PA",   "PAASI - Asie em.", "panier", "#B7E04B", False),  # Amundi PEA MSCI Emerging Asia FR0013412012, TER ~0,30%
+    # --- reference monde (coeur de portefeuille) ---
+    ("WPEA.PA",    "WPEA - MSCI World","panier", "#F2F2F2", False),  # iShares MSCI World Swap PEA IE0002XZSHO1, TER 0,20%
 ]
 
 # ----------------------------------------------------------------------------
