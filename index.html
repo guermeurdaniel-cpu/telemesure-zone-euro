@@ -44,6 +44,11 @@
   .up{color:#54E0A0}.down{color:#FF7A8A}.flat{color:var(--dim)}
   .notes{margin-top:22px;border-top:1px solid var(--line);padding-top:14px;color:var(--dim);font-size:12.5px;line-height:1.6}
   .notes b{color:var(--ink)}
+  /* --- vue Journee (intraday) --- */
+  .intrabar{display:none;flex-wrap:wrap;gap:10px 14px;align-items:flex-end;margin:0 0 12px;
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;}
+  .intrabar.show{display:flex}
+  .intrabar .seuil{margin-left:auto;align-self:center}
   /* --- vue Gain net --- */
   .params{display:none;flex-wrap:wrap;gap:10px 14px;align-items:flex-end;margin:0 0 12px;
     background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;}
@@ -85,6 +90,7 @@
     <div class="seg" id="viewSeg">
       <button data-v="chart" class="on">Courbes</button>
       <button data-v="net">Gain net</button>
+      <button data-v="intra">Journee</button>
     </div>
     <button class="refresh" id="refreshBtn">&#8635; Recharger</button>
   </div>
@@ -112,6 +118,21 @@
     <div class="seuil" id="seuil"></div>
   </div>
 
+  <div class="intrabar" id="intrabar">
+    <div class="fld">
+      <label>Mode</label>
+      <select id="intraMode">
+        <option value="base100">Base 100 &middot; toutes les lignes</option>
+        <option value="reel">Cours reel &middot; une valeur</option>
+      </select>
+    </div>
+    <div class="fld" id="intraSymFld" style="display:none">
+      <label>Valeur</label>
+      <select id="intraSym"></select>
+    </div>
+    <div class="seuil" id="intraStatus"></div>
+  </div>
+
   <div class="scope" id="scope">
     <canvas id="cv"></canvas>
     <div class="status" id="status">Chargement de data.json...</div>
@@ -125,18 +146,23 @@
   <div class="notes">
     <p><b>Lecture.</b> Onglet Paniers : l'<b>EuroStoxx 50</b> (en gras) sert de reference zone euro ; le <b>MSCI EMU</b> elargit a ~225 valeurs de la zone, le <b>MSCI Europe</b> et le <b>Stoxx Europe 600</b> ouvrent a l'Europe large. Le CAC 40, le DAX, le FTSE MIB, l'IBEX 35 et l'AEX donnent la rotation entre places. Attention : les lignes ETF (CEMU, PCEU, MEUD) et le DAX sont en <b>total return</b>, les indices prix non — d'ou une legere derive (voir README). Onglet Valeurs : amorce sur Air Liquide, Sanofi et Pernod Ricard, complete d'un fond de grandes capi zone euro a retirer selon tes convictions (edite la liste <b>VALEURS</b> dans <b>scripts/fetch_data.py</b>).</p>
     <p><b>Vue Gain net.</b> Simule un aller-retour achat puis revente sur la fenetre, net des frais d'un PEA BoursoBank : courtage plafonne a <b>0,50 % par ordre</b> (~1 % A/R), <b>0 droit de garde</b>, et <b>TTF 0,40 % a l'achat</b> sur les actions francaises &gt; 1 Md&euro; (jamais sur ETF, indices, ni titres etrangers comme ASML/SAP). Le scenario <b>BoursoMarkets</b> met l'achat d'ETF a 0 % (la revente reste a 0,50 %). Par defaut, <b>arbitrage interne au PEA = 0 impot</b> ; le selecteur fiscalite simule un retrait (17,2 % si PEA &gt; 5 ans, 30 % sinon). Le TER de l'ETF n'est pas ajoute : il est deja dans le cours (les lignes ETF sont en total return).</p>
+    <p><b>Vue Journee.</b> Evolution intraday du jour, recuperee <b>en direct</b> depuis Yahoo Finance (intervalle 5&nbsp;min) via un proxy CORS &mdash; independante du <b>data.json</b> quotidien. Mode <b>Base 100</b> : chaque ligne visible est ramenee a 100 = <b>cloture de la veille</b> (comparaison en % sur la seance). Mode <b>Cours reel</b> : le cours brut d'une seule valeur, cloture veille en pointilles. Hors seance (week-end, avant ouverture), la derniere seance disponible s'affiche. Un titre sans intraday cote est signale dans la barre d'etat.</p>
   </div>
 
 <script>
 (function(){
   "use strict";
-  var state={tab:"panier",view:"chart",off:{},series:[]};
+  var state={tab:"panier",view:"chart",off:{},series:[],intra:{mode:"base100",sym:null,data:{}}};
   var cv=document.getElementById("cv"),ctx=cv.getContext("2d");
   var statusEl=document.getElementById("status"),legendEl=document.getElementById("legend");
   var scopeEl=document.getElementById("scope"),tblEl=document.getElementById("tblwrap");
   var paramsEl=document.getElementById("params"),seuilEl=document.getElementById("seuil");
   var montantEl=document.getElementById("montant"),scenarioEl=document.getElementById("scenario"),fiscEl=document.getElementById("fisc");
   var hover=null;
+  var intrabarEl=document.getElementById("intrabar");
+  var intraModeEl=document.getElementById("intraMode");
+  var intraSymEl=document.getElementById("intraSym");
+  var intraStatusEl=document.getElementById("intraStatus");
 
   // --- Frais PEA BoursoBank ---
   // Courtage plafonne au max legal 0,50% sur PEA (forfait Decouverte : 1,99 EUR < 500 EUR,
@@ -204,7 +230,7 @@
       d.innerHTML='<span class="swatch" style="background:'+s.col+';color:'+s.col+'"></span>'+
         '<span class="nm">'+s.name+'<span class="tk">'+s.tk+'</span></span>'+
         '<span class="pct '+cls+'">'+pctTxt+'</span>';
-      d.onclick=function(){state.off[s.tk]=!state.off[s.tk];buildLegend();draw();};
+      d.onclick=function(){state.off[s.tk]=!state.off[s.tk];buildLegend();if(state.view==="intra")refreshIntra();else paint();};
       legendEl.appendChild(d);
     });
   }
@@ -249,12 +275,179 @@
     tblEl.innerHTML=h;
   }
 
+  // ===== Vue Journee — intraday live (Yahoo Finance via proxy CORS) ==========
+  var PROXIES=[
+    function(u){return "https://corsproxy.io/?url="+encodeURIComponent(u);},
+    function(u){return "https://api.allorigins.win/raw?url="+encodeURIComponent(u);}
+  ];
+  function proxFetch(url){
+    var i=0;
+    function tryNext(){
+      if(i>=PROXIES.length) return Promise.reject(new Error("proxies indisponibles"));
+      return fetch(PROXIES[i++](url)).then(function(r){if(!r.ok)throw 0;return r.json();}).catch(tryNext);
+    }
+    return tryNext();
+  }
+  function intraStatus(txt,err){ intraStatusEl.innerHTML=err?("<span class='err'>"+txt+"</span>"):txt; }
+  function byTk(tk){ for(var i=0;i<state.series.length;i++) if(state.series[i].tk===tk) return state.series[i]; return null; }
+  function fmtNum(v){ var d=Math.abs(v)>=1000?0:2; return Number(v).toLocaleString("fr-FR",{minimumFractionDigits:d,maximumFractionDigits:d}); }
+
+  function parseIntra(j){
+    try{
+      var r=j.chart.result[0], ts=r.timestamp||[], q=(r.indicators.quote||[])[0]||{}, cl=q.close||[];
+      var meta=r.meta||{}, prev=meta.chartPreviousClose; if(prev==null) prev=meta.previousClose;
+      var x=[],y=[];
+      for(var i=0;i<ts.length;i++){ if(cl[i]!=null){ x.push(ts[i]*1000); y.push(cl[i]); } }
+      if(!y.length) return {ok:false};
+      if(prev==null) prev=y[0];
+      return {ok:true,x:x,y:y,prev:prev};
+    }catch(e){ return {ok:false}; }
+  }
+  function intraNeededSymbols(){
+    if(state.intra.mode==="reel") return state.intra.sym?[state.intra.sym]:[];
+    return state.series.filter(function(s){return s.tab===state.tab && !state.off[s.tk];}).map(function(s){return s.tk;});
+  }
+  function intraSummary(){
+    var syms=intraNeededSymbols();
+    if(!syms.length){ intraStatus("Choisis une valeur."); return; }
+    var ko=syms.filter(function(t){var p=state.intra.data[t];return p&&!p.ok;});
+    if(ko.length){ intraStatus(ko.length+" titre(s) sans intraday : "+ko.join(", "),true); return; }
+    if(state.intra.mode==="reel"){
+      var p=state.intra.data[state.intra.sym];
+      if(p&&p.ok){ var c=(p.y[p.y.length-1]/p.prev-1)*100; intraStatus("Base : cloture veille "+fmtNum(p.prev)+" &middot; jour "+(c>=0?"+":"")+c.toFixed(2)+"%"); }
+      else intraStatus("Base 100 = cloture veille");
+    } else { intraStatus("Base 100 = cloture veille &middot; "+syms.length+" ligne(s)"); }
+  }
+  function fetchIntraday(syms){
+    var todo=syms.filter(function(t){return !state.intra.data[t];});
+    if(!todo.length){ paint(); intraSummary(); return; }
+    var n=todo.length, done=0, i=0;
+    intraStatus("Chargement intraday "+done+"/"+n+"...");
+    function next(){
+      if(i>=todo.length){ paint(); intraSummary(); return; }
+      var sym=todo[i++];
+      var url="https://query1.finance.yahoo.com/v8/finance/chart/"+encodeURIComponent(sym)+"?interval=5m&range=1d";
+      proxFetch(url).then(function(j){ state.intra.data[sym]=parseIntra(j); })
+        .catch(function(){ state.intra.data[sym]={ok:false}; })
+        .then(function(){ done++; intraStatus("Chargement intraday "+done+"/"+n+"..."); paint(); next(); });
+    }
+    next();
+  }
+  function hourTicks(tmin,tmax){
+    var out=[],d=new Date(tmin);d.setMinutes(0,0,0);
+    if(d.getTime()<tmin) d.setHours(d.getHours()+1);
+    var guard=0;
+    while(d.getTime()<=tmax && guard<48){
+      out.push({t:d.getTime(),label:d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})});
+      d.setHours(d.getHours()+1); guard++;
+    }
+    return out;
+  }
+  function updateIntraUI(){
+    var reel=state.intra.mode==="reel";
+    document.getElementById("intraSymFld").style.display=reel?"":"none";
+    legendEl.style.display=(state.view==="intra"&&reel)?"none":"";
+    var inT=state.series.filter(function(s){return s.tab===state.tab;});
+    var cur=state.intra.sym;
+    intraSymEl.innerHTML="";
+    inT.forEach(function(s){var o=document.createElement("option");o.value=s.tk;o.textContent=s.name+" ("+s.tk+")";intraSymEl.appendChild(o);});
+    if(!cur||!inT.some(function(s){return s.tk===cur;})){ cur=inT.length?inT[0].tk:null; state.intra.sym=cur; }
+    if(cur) intraSymEl.value=cur;
+  }
+  function refreshIntra(){ updateIntraUI(); paint(); fetchIntraday(intraNeededSymbols()); }
+
+  function drawIntra(){
+    var cssW=cv.clientWidth,cssH=cv.clientHeight;
+    ctx.clearRect(0,0,cssW,cssH);
+    var reel=state.intra.mode==="reel", rows=[];
+    if(reel){
+      var p=state.intra.data[state.intra.sym], m=byTk(state.intra.sym);
+      if(p&&p.ok) rows.push({tk:state.intra.sym,name:m?m.name:state.intra.sym,col:m?m.col:"#00E5C7",x:p.x,y:p.y.slice(),prev:p.prev,hero:true});
+    } else {
+      state.series.forEach(function(s){
+        if(s.tab!==state.tab||state.off[s.tk]) return;
+        var pp=state.intra.data[s.tk]; if(!pp||!pp.ok) return;
+        rows.push({tk:s.tk,name:s.name,col:s.col,x:pp.x,y:pp.y.map(function(v){return v/pp.prev*100;}),prev:100,hero:s.hero});
+      });
+    }
+    if(!rows.length) return;
+    var tmin=Infinity,tmax=-Infinity,vmin=Infinity,vmax=-Infinity;
+    rows.forEach(function(r){for(var i=0;i<r.x.length;i++){if(r.x[i]<tmin)tmin=r.x[i];if(r.x[i]>tmax)tmax=r.x[i];if(r.y[i]<vmin)vmin=r.y[i];if(r.y[i]>vmax)vmax=r.y[i];}});
+    var refV=reel?rows[0].prev:100;
+    if(refV<vmin)vmin=refV; if(refV>vmax)vmax=refV;
+    var pad=(vmax-vmin)*0.10||1; vmin-=pad; vmax+=pad;
+    var plotW=cssW-PADL-PADR,plotH=cssH-PADT-PADB;
+    function X(t){return PADL+(t-tmin)/(tmax-tmin||1)*plotW;}
+    function Y(v){return PADT+(1-(v-vmin)/(vmax-vmin||1))*plotH;}
+    ctx.font="10px ui-monospace,monospace";ctx.textBaseline="middle";
+    var step=niceStep(vmin,vmax,5),start=Math.ceil(vmin/step)*step;
+    for(var v=start;v<=vmax;v+=step){
+      var gy=Y(v);
+      ctx.strokeStyle="rgba(94,234,212,.07)";ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(PADL,gy);ctx.lineTo(cssW-PADR,gy);ctx.stroke();
+      ctx.fillStyle="#46555C";ctx.textAlign="right";ctx.fillText(reel?fmtNum(v):v.toFixed(0),PADL-8,gy);
+    }
+    var yref=Y(refV);
+    ctx.setLineDash([4,4]);ctx.strokeStyle="rgba(255,210,63,.32)";ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(PADL,yref);ctx.lineTo(cssW-PADR,yref);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle="rgba(255,210,63,.7)";ctx.textAlign="left";ctx.textBaseline="bottom";ctx.fillText("cloture veille",PADL+4,yref-2);
+    var hrs=hourTicks(tmin,tmax);
+    ctx.textAlign="center";ctx.textBaseline="top";
+    hrs.forEach(function(h){var x=X(h.t);
+      ctx.strokeStyle="rgba(94,234,212,.06)";ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(x,PADT);ctx.lineTo(x,cssH-PADB);ctx.stroke();
+      ctx.fillStyle="#46555C";ctx.fillText(h.label,x,cssH-PADB+6);});
+    rows.forEach(function(r){
+      ctx.beginPath();
+      for(var i=0;i<r.x.length;i++){var x=X(r.x[i]),y=Y(r.y[i]);if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}
+      ctx.lineJoin="round";ctx.strokeStyle=r.col;ctx.globalAlpha=0.92;
+      ctx.shadowColor=r.col;ctx.shadowBlur=r.hero?9:5;ctx.lineWidth=r.hero?2.4:1.4;
+      ctx.stroke();ctx.shadowBlur=0;ctx.globalAlpha=1;
+      var lx=X(r.x[r.x.length-1]),ly=Y(r.y[r.y.length-1]);
+      ctx.fillStyle=r.col;ctx.beginPath();ctx.arc(lx,ly,2.8,0,7);ctx.fill();
+    });
+    if(hover!=null){
+      var tx=tmin+(hover-PADL)/plotW*(tmax-tmin);
+      if(hover>=PADL && hover<=cssW-PADR){
+        ctx.strokeStyle="rgba(215,226,224,.22)";ctx.lineWidth=1;
+        ctx.beginPath();ctx.moveTo(hover,PADT);ctx.lineTo(hover,cssH-PADB);ctx.stroke();
+        var hr=[];
+        rows.forEach(function(r){var bi=0,bd=Infinity;for(var i=0;i<r.x.length;i++){var dd=Math.abs(r.x[i]-tx);if(dd<bd){bd=dd;bi=i;}}hr.push({r:r,bi:bi,v:r.y[bi]});
+          ctx.fillStyle=r.col;ctx.shadowColor=r.col;ctx.shadowBlur=6;ctx.beginPath();ctx.arc(X(r.x[bi]),Y(r.y[bi]),2.6,0,7);ctx.fill();ctx.shadowBlur=0;});
+        hr.sort(function(a,c){return c.v-a.v;});
+        var dt=new Date(hr[0].r.x[hr[0].bi]),lbl=dt.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
+        var bw=reel?152:140,bx=hover>cssW/2?hover-bw-10:hover+10,by=PADT+4,bh=18+hr.length*15;
+        ctx.fillStyle="rgba(8,11,15,.92)";ctx.strokeStyle="rgba(94,234,212,.25)";
+        roundRect(bx,by,bw,bh,7);ctx.fill();ctx.stroke();
+        ctx.textAlign="left";ctx.textBaseline="top";
+        ctx.fillStyle="#6F8088";ctx.font="10px ui-monospace,monospace";ctx.fillText(lbl,bx+9,by+5);
+        hr.forEach(function(o,i){var yy=by+18+i*15;
+          ctx.fillStyle=o.r.col;ctx.fillRect(bx+9,yy+3,7,7);
+          ctx.fillStyle="#D7E2E0";ctx.font="10px ui-monospace,monospace";ctx.fillText(o.r.tk,bx+22,yy);
+          ctx.textAlign="right";
+          var disp=reel?fmtNum(o.v):((o.v-100>=0?"+":"")+(o.v-100).toFixed(2)+"%");
+          ctx.fillStyle=(o.v>=(reel?o.r.prev:100))?"#54E0A0":"#FF7A8A";
+          ctx.fillText(disp,bx+bw-9,yy);ctx.textAlign="left";});
+      }
+    }
+    if(reel){
+      var r0=rows[0],lastv=r0.y[r0.y.length-1],chg=(lastv/r0.prev-1)*100;
+      ctx.textAlign="left";ctx.textBaseline="top";ctx.font="600 12px ui-sans-serif,system-ui";
+      ctx.fillStyle=chg>=0?"#54E0A0":"#FF7A8A";
+      ctx.fillText((chg>=0?"+":"")+chg.toFixed(2)+"% jour - "+fmtNum(lastv),PADL+4,PADT+2);
+    }
+  }
+  function paint(){ if(state.view==="intra") drawIntra(); else draw(); }
+
   function setView(){
-    var net=state.view==="net";
+    var net=state.view==="net", intra=state.view==="intra";
     scopeEl.style.display=net?"none":"";
     tblEl.classList.toggle("show",net);
     paramsEl.classList.toggle("show",net);
-    if(net){renderTable();} else {resize();}
+    intrabarEl.classList.toggle("show",intra);
+    if(net){ legendEl.style.display=""; renderTable(); }
+    else if(intra){ resize(); refreshIntra(); }
+    else { legendEl.style.display=""; resize(); }
   }
 
   var DPR=Math.max(1,Math.min(3,window.devicePixelRatio||1));
@@ -265,7 +458,7 @@
     var cssH=Math.max(280,Math.min(460,Math.round(cssW*0.56)));
     cv.style.height=cssH+"px";
     cv.width=Math.round(cssW*DPR);cv.height=Math.round(cssH*DPR);
-    ctx.setTransform(DPR,0,0,DPR,0,0);draw();
+    ctx.setTransform(DPR,0,0,DPR,0,0);paint();
   }
 
   function bounds(vis){
@@ -368,9 +561,9 @@
 
   function onMove(e){
     var rect=cv.getBoundingClientRect();
-    var cx=(e.touches?e.touches[0].clientX:e.clientX)-rect.left;hover=cx;draw();
+    var cx=(e.touches?e.touches[0].clientX:e.clientX)-rect.left;hover=cx;paint();
   }
-  function onLeave(){hover=null;draw();}
+  function onLeave(){hover=null;paint();}
   cv.addEventListener("mousemove",onMove);
   cv.addEventListener("mouseleave",onLeave);
   cv.addEventListener("touchstart",onMove,{passive:true});
@@ -383,7 +576,7 @@
     var bs=this.querySelectorAll("button");
     for(var i=0;i<bs.length;i++)bs[i].classList.toggle("on",bs[i]===btn);
     buildLegend();
-    if(state.view==="net") renderTable(); else resize();
+    if(state.view==="net") renderTable(); else if(state.view==="intra") refreshIntra(); else resize();
   });
   document.getElementById("viewSeg").addEventListener("click",function(e){
     var btn=e.target.closest("button");if(!btn)return;
@@ -396,7 +589,9 @@
     el.addEventListener("input",function(){ if(state.view==="net") renderTable(); });
     el.addEventListener("change",function(){ if(state.view==="net") renderTable(); });
   });
-  document.getElementById("refreshBtn").addEventListener("click",load);
+  intraModeEl.addEventListener("change",function(){ state.intra.mode=this.value; refreshIntra(); });
+  intraSymEl.addEventListener("change",function(){ state.intra.sym=this.value; refreshIntra(); });
+  document.getElementById("refreshBtn").addEventListener("click",function(){ state.intra.data={}; load(); });
   window.addEventListener("resize",function(){ if(state.view!=="net") resize(); });
 
   load();
