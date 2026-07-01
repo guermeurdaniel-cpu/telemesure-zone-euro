@@ -276,15 +276,29 @@
   }
 
   // ===== Vue Journee — intraday live (Yahoo Finance via proxy CORS) ==========
+  // Proxies CORS, essayes dans l'ordre. codetabs est le plus fiable sans cle ; corsproxy.io
+  // bloque de plus en plus les requetes GitHub Pages (repond du HTML au lieu du JSON).
   var PROXIES=[
+    function(u){return "https://api.codetabs.com/v1/proxy/?quest="+encodeURIComponent(u);},
     function(u){return "https://corsproxy.io/?url="+encodeURIComponent(u);},
-    function(u){return "https://api.allorigins.win/raw?url="+encodeURIComponent(u);}
+    function(u){return "https://api.allorigins.win/raw?url="+encodeURIComponent(u);},
+    function(u){return "https://thingproxy.freeboard.io/fetch/"+u;}
   ];
+  var INTRA_ERR="";   // derniere raison d'echec proxy, pour l'afficher dans la barre d'etat
   function proxFetch(url){
     var i=0;
     function tryNext(){
-      if(i>=PROXIES.length) return Promise.reject(new Error("proxies indisponibles"));
-      return fetch(PROXIES[i++](url)).then(function(r){if(!r.ok)throw 0;return r.json();}).catch(tryNext);
+      if(i>=PROXIES.length) return Promise.reject(new Error(INTRA_ERR||"proxies indisponibles"));
+      return fetch(PROXIES[i++](url)).then(function(r){
+        if(!r.ok){ INTRA_ERR="HTTP "+r.status; throw 0; }
+        return r.text();
+      }).then(function(t){
+        var j;
+        try{ j=JSON.parse(t); }
+        catch(e){ INTRA_ERR="reponse non-JSON (proxy bloque ?)"; throw 0; }        // page HTML de blocage
+        if(!j||!j.chart||!j.chart.result){ INTRA_ERR="format Yahoo inattendu"; throw 0; }
+        return j;
+      }).catch(tryNext);
     }
     return tryNext();
   }
@@ -311,7 +325,7 @@
     var syms=intraNeededSymbols();
     if(!syms.length){ intraStatus("Choisis une valeur."); return; }
     var ko=syms.filter(function(t){var p=state.intra.data[t];return p&&!p.ok;});
-    if(ko.length){ intraStatus(ko.length+" titre(s) sans intraday : "+ko.join(", "),true); return; }
+    if(ko.length){ intraStatus(ko.length+" titre(s) sans intraday : "+ko.join(", ")+(INTRA_ERR?" ("+INTRA_ERR+")":""),true); return; }
     if(state.intra.mode==="reel"){
       var p=state.intra.data[state.intra.sym];
       if(p&&p.ok){ var c=(p.y[p.y.length-1]/p.prev-1)*100; intraStatus("Base : cloture veille "+fmtNum(p.prev)+" &middot; jour "+(c>=0?"+":"")+c.toFixed(2)+"%"); }
@@ -319,6 +333,7 @@
     } else { intraStatus("Base 100 = cloture veille &middot; "+syms.length+" ligne(s)"); }
   }
   function fetchIntraday(syms){
+    INTRA_ERR="";
     var todo=syms.filter(function(t){return !state.intra.data[t];});
     if(!todo.length){ paint(); intraSummary(); return; }
     var n=todo.length, done=0, i=0;
