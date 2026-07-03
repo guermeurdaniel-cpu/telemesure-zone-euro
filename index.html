@@ -279,18 +279,31 @@
   // ===== Vue Journee — intraday live (Yahoo Finance via proxy CORS) ==========
   // Proxies CORS, essayes dans l'ordre. codetabs est le plus fiable sans cle ; corsproxy.io
   // bloque de plus en plus les requetes GitHub Pages (repond du HTML au lieu du JSON).
+  // ===== RELAIS PERSO (Cloudflare Worker) =====
+  // Une fois ton Worker deploye, colle son URL ici (ex: "https://yahoo-relay.toncompte.workers.dev").
+  // Il sera utilise EN PRIORITE ; les proxies publics ci-dessous ne servent plus que de secours.
+  var MON_PROXY = "";   // <-- URL du Worker, vide = proxies publics seulement
+  // ============================================
   var PROXIES=[
     function(u){return "https://api.codetabs.com/v1/proxy/?quest="+encodeURIComponent(u);},
     function(u){return "https://corsproxy.io/?url="+encodeURIComponent(u);},
     function(u){return "https://api.allorigins.win/raw?url="+encodeURIComponent(u);},
     function(u){return "https://thingproxy.freeboard.io/fetch/"+u;}
   ];
+  if(MON_PROXY){ PROXIES.unshift(function(u){return MON_PROXY+"/?url="+encodeURIComponent(u);}); }
   var INTRA_ERR="";   // derniere raison d'echec proxy, pour l'afficher dans la barre d'etat
+  var GOOD_PROXY=-1;  // index du dernier proxy qui a fonctionne (essaye en premier ensuite)
   function proxFetch(url){
+    var order=[]; if(GOOD_PROXY>=0) order.push(GOOD_PROXY);
+    for(var k=0;k<PROXIES.length;k++){ if(k!==GOOD_PROXY) order.push(k); }
     var i=0;
     function tryNext(){
-      if(i>=PROXIES.length) return Promise.reject(new Error(INTRA_ERR||"proxies indisponibles"));
-      return fetch(PROXIES[i++](url)).then(function(r){
+      if(i>=order.length) return Promise.reject(new Error(INTRA_ERR||"proxies indisponibles"));
+      var idx=order[i++], pu=PROXIES[idx](url);
+      var ctl=null; try{ ctl=new AbortController(); }catch(e){}
+      var to=ctl?setTimeout(function(){ INTRA_ERR="timeout proxy"; ctl.abort(); },6000):0;
+      return fetch(pu, ctl?{signal:ctl.signal}:{}).then(function(r){
+        clearTimeout(to);
         if(!r.ok){ INTRA_ERR="HTTP "+r.status; throw 0; }
         return r.text();
       }).then(function(t){
@@ -298,8 +311,9 @@
         try{ j=JSON.parse(t); }
         catch(e){ INTRA_ERR="reponse non-JSON (proxy bloque ?)"; throw 0; }        // page HTML de blocage
         if(!j||!j.chart||!j.chart.result){ INTRA_ERR="format Yahoo inattendu"; throw 0; }
+        GOOD_PROXY=idx;                                                            // ce proxy marche : on le retient
         return j;
-      }).catch(tryNext);
+      }).catch(function(){ clearTimeout(to); return tryNext(); });
     }
     return tryNext();
   }
@@ -337,15 +351,19 @@
     INTRA_ERR="";
     var todo=syms.filter(function(t){return !state.intra.data[t];});
     if(!todo.length){ paint(); intraSummary(); return; }
-    var n=todo.length, done=0, i=0;
+    var n=todo.length, done=0, i=0, anyOk=false;
     intraStatus("Chargement intraday "+done+"/"+n+"...");
     function next(){
       if(i>=todo.length){ paint(); intraSummary(); return; }
       var sym=todo[i++];
       var url="https://query1.finance.yahoo.com/v8/finance/chart/"+encodeURIComponent(sym)+"?interval=5m&range=1d";
-      proxFetch(url).then(function(j){ state.intra.data[sym]=parseIntra(j); })
+      proxFetch(url).then(function(j){ var p=parseIntra(j); state.intra.data[sym]=p; if(p&&p.ok) anyOk=true; })
         .catch(function(){ state.intra.data[sym]={ok:false}; })
-        .then(function(){ done++; intraStatus("Chargement intraday "+done+"/"+n+"..."); paint(); next(); });
+        .then(function(){
+          done++;
+          if(!anyOk && INTRA_ERR){ paint(); intraStatus("Intraday indisponible : "+INTRA_ERR+" (proxies CORS bloques par Yahoo). Solution durable : relais perso MON_PROXY.",true); return; }
+          intraStatus("Chargement intraday "+done+"/"+n+"..."); paint(); next();
+        });
     }
     next();
   }
