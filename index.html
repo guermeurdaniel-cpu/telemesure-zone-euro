@@ -277,18 +277,14 @@
   }
 
   // ===== Vue Journee — intraday live (Yahoo Finance via proxy CORS) ==========
-  // Proxies CORS, essayes dans l'ordre. codetabs est le plus fiable sans cle ; corsproxy.io
-  // bloque de plus en plus les requetes GitHub Pages (repond du HTML au lieu du JSON).
-  // ===== RELAIS PERSO (Cloudflare Worker) =====
-  // Une fois ton Worker deploye, colle son URL ici (ex: "https://yahoo-relay.toncompte.workers.dev").
-  // Il sera utilise EN PRIORITE ; les proxies publics ci-dessous ne servent plus que de secours.
-  var MON_PROXY = "";   // <-- URL du Worker, vide = proxies publics seulement
+  // ===== RELAIS PERSO (Cloudflare Worker) — deploye le 22/07/2026 =====
+  // Utilise EN PRIORITE (unshift plus bas). Les deux proxies publics restants
+  // ne sont plus qu'un filet de securite si le Worker tombe.
+  var MON_PROXY = "https://flat-bread-4d06.guermeur-daniel.workers.dev";   // relais perso Cloudflare Worker (prioritaire)
   // ============================================
   var PROXIES=[
     function(u){return "https://api.codetabs.com/v1/proxy/?quest="+encodeURIComponent(u);},
-    function(u){return "https://corsproxy.io/?url="+encodeURIComponent(u);},
-    function(u){return "https://api.allorigins.win/raw?url="+encodeURIComponent(u);},
-    function(u){return "https://thingproxy.freeboard.io/fetch/"+u;}
+    function(u){return "https://api.allorigins.win/raw?url="+encodeURIComponent(u);}
   ];
   if(MON_PROXY){ PROXIES.unshift(function(u){return MON_PROXY+"/?url="+encodeURIComponent(u);}); }
   var INTRA_ERR="";   // derniere raison d'echec proxy, pour l'afficher dans la barre d'etat
@@ -301,8 +297,8 @@
       if(i>=order.length) return Promise.reject(new Error(INTRA_ERR||"proxies indisponibles"));
       var idx=order[i++], pu=PROXIES[idx](url);
       var ctl=null; try{ ctl=new AbortController(); }catch(e){}
-      var to=ctl?setTimeout(function(){ INTRA_ERR="timeout proxy"; ctl.abort(); },6000):0;
-      return fetch(pu, ctl?{signal:ctl.signal}:{}).then(function(r){
+      var to=ctl?setTimeout(function(){ INTRA_ERR="timeout proxy"; ctl.abort(); },3000):0;
+      return fetch(pu, Object.assign({cache:"no-store"}, ctl?{signal:ctl.signal}:{})).then(function(r){
         clearTimeout(to);
         if(!r.ok){ INTRA_ERR="HTTP "+r.status; throw 0; }
         return r.text();
