@@ -50,10 +50,14 @@
     background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;}
   .intrabar.show{display:flex}
   .intrabar .seuil{margin-left:auto;align-self:center}
-  /* --- vue Gain net --- */
-  .params{display:none;flex-wrap:wrap;gap:10px 14px;align-items:flex-end;margin:0 0 12px;
-    background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;}
-  .params.show{display:flex}
+  /* --- curseur de profondeur --- */
+  .periode{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:10px 14px 6px;margin:0 0 12px;}
+  .periode .hd{display:flex;justify-content:space-between;align-items:baseline;
+    font-family:ui-monospace,monospace;font-size:10.5px;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--dimmer);margin-bottom:2px;}
+  .periode .hd b{color:var(--teal);font-size:12.5px;letter-spacing:0;text-transform:none}
+  input[type=range]{width:100%;accent-color:var(--teal);height:26px}
   .fld{display:flex;flex-direction:column;gap:5px}
   .fld label{font-family:ui-monospace,monospace;font-size:10.5px;letter-spacing:.06em;
     text-transform:uppercase;color:var(--dimmer)}
@@ -62,26 +66,12 @@
   .fld input{width:120px}
   .seuil{font-family:ui-monospace,monospace;font-size:11.5px;color:var(--dim);margin-left:auto;align-self:center;}
   .seuil b{color:var(--teal)}
-  .tblwrap{display:none;overflow-x:auto;-webkit-overflow-scrolling:touch;
-    background:var(--panel);border:1px solid var(--line);border-radius:14px;}
-  .tblwrap.show{display:block}
-  table.gn{width:100%;border-collapse:collapse;font-size:12.5px;min-width:440px}
-  table.gn th,table.gn td{padding:9px 12px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line)}
-  table.gn th{font-family:ui-monospace,monospace;font-size:10px;letter-spacing:.05em;text-transform:uppercase;
-    color:var(--dimmer);text-align:right;position:sticky;top:0;background:var(--panel)}
-  table.gn td.nm,table.gn th.nm{text-align:left}
-  table.gn td.nm{font-weight:600}
-  table.gn td.nm .tk{font-family:ui-monospace,monospace;font-size:10px;color:var(--dimmer);display:block;font-weight:400}
-  table.gn tr:last-child td{border-bottom:0}
-  table.gn .net{font-family:ui-monospace,monospace;font-weight:700}
-  table.gn .mono{font-family:ui-monospace,monospace;color:var(--dim)}
-  table.gn .ttf{color:#FFB000}
 </style>
 </head>
 <body>
   <span class="eyebrow">Performance relative · base 100</span>
-  <h1>Zone euro &amp; PEA — 6 mois</h1>
-  <p class="sub">Chaque trace est ramenee a <b>100</b> a sa premiere seance de la fenetre. Onglet <b>Paniers</b> : indices zone euro (agregats deja constitues). Onglet <b>Valeurs</b> : titres individuels eligibles PEA, allumables/eteignables d'un clic dans la legende. Tout est en <b>EUR</b> : aucun effet de change. Donnees Yahoo Finance, mises a jour chaque jour ouvre par GitHub Actions.</p>
+  <h1>Zone euro &amp; PEA</h1>
+  <p class="sub">Chaque trace est ramenee a <b>100</b> a sa premiere seance de la fenetre, dont la profondeur se regle de <b>1 a 6 mois</b> au curseur. Onglet <b>Paniers</b> : indices zone euro (agregats deja constitues). Onglet <b>Valeurs</b> : titres individuels eligibles PEA, allumables/eteignables d'un clic dans la legende. Tout est en <b>EUR</b> : aucun effet de change. Donnees Yahoo Finance, mises a jour chaque jour ouvre par GitHub Actions.</p>
 
   <div class="controls">
     <div class="seg" id="tabSeg">
@@ -90,33 +80,14 @@
     </div>
     <div class="seg" id="viewSeg">
       <button data-v="chart" class="on">Courbes</button>
-      <button data-v="net">Gain net</button>
       <button data-v="intra">Journee</button>
     </div>
     <button class="refresh" id="refreshBtn">&#8635; Recharger</button>
   </div>
 
-  <div class="params" id="params">
-    <div class="fld">
-      <label>Montant / ligne (EUR)</label>
-      <input id="montant" type="number" min="0" step="100" value="1000">
-    </div>
-    <div class="fld">
-      <label>Courtage</label>
-      <select id="scenario">
-        <option value="standard">Standard · 0,50 % A + 0,50 % V</option>
-        <option value="boursomarkets">BoursoMarkets · achat 0 %, vente 0,50 %</option>
-      </select>
-    </div>
-    <div class="fld">
-      <label>Fiscalite</label>
-      <select id="fisc">
-        <option value="0">Arbitrage interne · 0 impot</option>
-        <option value="0.172">Retrait PEA &gt; 5 ans · 17,2 %</option>
-        <option value="0.30">Retrait PEA &lt; 5 ans · 30 %</option>
-      </select>
-    </div>
-    <div class="seuil" id="seuil"></div>
+  <div class="periode" id="periode">
+    <div class="hd"><span>Profondeur affichee</span><b id="lbPeriode">6 mois</b></div>
+    <input type="range" id="slPeriode" min="1" max="6" step="1" value="6">
   </div>
 
   <div class="intrabar" id="intrabar">
@@ -139,61 +110,50 @@
     <div class="status" id="status">Chargement de data.json...</div>
   </div>
 
-  <div class="tblwrap" id="tblwrap"></div>
-
   <div class="legend" id="legend"></div>
 
 
   <div class="notes">
     <p><b>Lecture.</b> Onglet Paniers : l'<b>EuroStoxx 50</b> (en gras) sert de reference zone euro ; le <b>MSCI EMU</b> elargit a ~225 valeurs de la zone, le <b>MSCI Europe</b> et le <b>Stoxx Europe 600</b> ouvrent a l'Europe large. Le CAC 40, le DAX, le FTSE MIB, l'IBEX 35 et l'AEX donnent la rotation entre places. Attention : les lignes ETF (CEMU, PCEU, MEUD) et le DAX sont en <b>total return</b>, les indices prix non — d'ou une legere derive (voir README). Onglet Valeurs : amorce sur Air Liquide, Sanofi et Pernod Ricard, complete d'un fond de grandes capi zone euro a retirer selon tes convictions (edite la liste <b>VALEURS</b> dans <b>scripts/fetch_data.py</b>).</p>
-    <p><b>Vue Gain net.</b> Simule un aller-retour achat puis revente sur la fenetre, net des frais d'un PEA BoursoBank : courtage plafonne a <b>0,50 % par ordre</b> (~1 % A/R), <b>0 droit de garde</b>, et <b>TTF 0,40 % a l'achat</b> sur les actions francaises &gt; 1 Md&euro; (jamais sur ETF, indices, ni titres etrangers comme ASML/SAP). Le scenario <b>BoursoMarkets</b> met l'achat d'ETF a 0 % (la revente reste a 0,50 %). Par defaut, <b>arbitrage interne au PEA = 0 impot</b> ; le selecteur fiscalite simule un retrait (17,2 % si PEA &gt; 5 ans, 30 % sinon). Le TER de l'ETF n'est pas ajoute : il est deja dans le cours (les lignes ETF sont en total return).</p>
+    <p><b>Profondeur.</b> Le curseur choisit la fenetre affichee, de <b>1 a 6 mois</b> (data.json en contient toujours 6). Les courbes sont <b>rebasees a 100 au premier jour de la fenetre</b> et les pourcentages de la legende sont recalcules sur cette meme fenetre : un mois et six mois ne donnent donc pas le meme classement.</p>
     <p><b>Vue Journee.</b> Evolution intraday du jour, recuperee <b>en direct</b> depuis Yahoo Finance (intervalle 5&nbsp;min) via un proxy CORS &mdash; independante du <b>data.json</b> quotidien. Mode <b>Base 100</b> : chaque ligne visible est ramenee a 100 = <b>cloture de la veille</b> (comparaison en % sur la seance). Mode <b>Cours reel</b> : le cours brut d'une seule valeur, cloture veille en pointilles. Hors seance (week-end, avant ouverture), la derniere seance disponible s'affiche. Un titre sans intraday cote est signale dans la barre d'etat.</p>
   </div>
 
 <script>
 (function(){
   "use strict";
-  var state={tab:"panier",view:"chart",off:{},series:[],intra:{mode:"base100",sym:null,data:{}}};
+  var state={tab:"panier",view:"chart",mois:6,off:{},series:[],intra:{mode:"base100",sym:null,data:{}}};
   var cv=document.getElementById("cv"),ctx=cv.getContext("2d");
   var statusEl=document.getElementById("status"),legendEl=document.getElementById("legend");
-  var scopeEl=document.getElementById("scope"),tblEl=document.getElementById("tblwrap");
-  var paramsEl=document.getElementById("params"),seuilEl=document.getElementById("seuil");
-  var montantEl=document.getElementById("montant"),scenarioEl=document.getElementById("scenario"),fiscEl=document.getElementById("fisc");
+  var scopeEl=document.getElementById("scope");
+  var periodeEl=document.getElementById("periode");
+  var slPeriodeEl=document.getElementById("slPeriode"),lbPeriodeEl=document.getElementById("lbPeriode");
   var hover=null;
   var intrabarEl=document.getElementById("intrabar");
   var intraModeEl=document.getElementById("intraMode");
   var intraSymEl=document.getElementById("intraSym");
   var intraStatusEl=document.getElementById("intraStatus");
 
-  // --- Frais PEA BoursoBank ---
-  // Courtage plafonne au max legal 0,50% sur PEA (forfait Decouverte : 1,99 EUR < 500 EUR,
-  // 0,60% au-dela, le tout plafonne a 0,50%). Pas de droits de garde ni frais de tenue.
-  // TTF 0,40% a l'achat sur actions FR > 1 Md EUR (pas sur ETF, indices, ni titres etrangers).
-  var COURTAGE_PLAFOND=0.005, COURTAGE_FORFAIT=1.99, COURTAGE_SEUIL=500, COURTAGE_TAUX=0.006, TTF=0.004;
-
-  function courtage(montant){
-    if(montant<=0) return 0;
-    var base=montant<COURTAGE_SEUIL?COURTAGE_FORFAIT:COURTAGE_TAUX*montant;
-    return Math.min(base, COURTAGE_PLAFOND*montant);
+  // Fenetre affichee : on ne garde que les seances posterieures a la date de coupure,
+  // et on rebase la serie a 100 sur sa premiere seance de cette fenetre.
+  function coupure(){
+    var last=0;
+    state.series.forEach(function(s){ if(s.x&&s.x.length&&s.x[s.x.length-1]>last) last=s.x[s.x.length-1]; });
+    if(!last) return 0;
+    var d=new Date(last); d.setMonth(d.getMonth()-state.mois);
+    return d.getTime();
   }
-  function isFR(s){ return s.tab==="valeur" && /\.PA$/.test(s.tk); } // action FR cotee Paris -> TTF
-  function ttfDue(s,m){ return isFR(s)?TTF*m:0; }
 
-  // Gain net d'un aller-retour pour une serie, montant m engage a l'achat.
-  function netGain(s){
-    var m=Math.max(0, parseFloat(montantEl.value)||0);
-    var scenario=scenarioEl.value, taxRate=parseFloat(fiscEl.value)||0;
-    var ratio=1+(s.pct/100);                                  // P1/P0 sur la fenetre
-    var ttf=ttfDue(s,m);
-    var cBuy=(scenario==="boursomarkets" && s.tab==="panier")?0:courtage(m); // BoursoMarkets : achat ETF gratuit
-    var costIn=m+cBuy+ttf;                                     // capital reellement engage
-    var grossOut=m*ratio;                                      // valeur a la revente, avant frais
-    var cSell=courtage(grossOut);
-    var proceeds=grossOut-cSell;
-    var gainBrut=proceeds-costIn;                              // gain net de frais, avant impot
-    var gain=(taxRate>0 && gainBrut>0)?gainBrut*(1-taxRate):gainBrut;
-    return {m:m,ratio:ratio,fraisAR:cBuy+cSell+ttf,cBuy:cBuy,cSell:cSell,ttf:ttf,
-            gain:gain,gainBrut:gainBrut,pctNet:costIn>0?gain/costIn*100:0,costIn:costIn};
+  // Vue fenetree d'une serie : memes champs que l'original, x/y tronques et y rebase.
+  function fenetre(s,cut){
+    var i0=0;
+    while(i0<s.x.length-1 && s.x[i0]<cut) i0++;
+    if(i0>=s.x.length-1) i0=Math.max(0,s.x.length-2);   // garde au moins deux points
+    var base=s.y[i0]||100;
+    var x=s.x.slice(i0), y=[];
+    for(var i=i0;i<s.y.length;i++) y.push(s.y[i]/base*100);
+    var pct=y.length?y[y.length-1]-100:0;
+    return {tk:s.tk,name:s.name,tab:s.tab,col:s.col,hero:s.hero,x:x,y:y,pct:pct};
   }
 
   function load(){
@@ -212,16 +172,19 @@
   }
 
   function visible(){
+    var cut=coupure();
     return state.series.filter(function(s){
       if(!s.x||!s.x.length) return false;
       if(state.off[s.tk]) return false;
       if(s.tab!==state.tab) return false;
       return true;
-    });
+    }).map(function(s){ return fenetre(s,cut); });
   }
 
   function buildLegend(){
-    var inT=state.series.filter(function(s){return s.tab===state.tab;});
+    var cut=coupure();
+    var inT=state.series.filter(function(s){return s.tab===state.tab;})
+      .map(function(s){ return (s.x&&s.x.length)?fenetre(s,cut):s; });
     legendEl.innerHTML="";
     inT.forEach(function(s){
       var d=document.createElement("div");
@@ -234,46 +197,6 @@
       d.onclick=function(){state.off[s.tk]=!state.off[s.tk];buildLegend();if(state.view==="intra")refreshIntra();else paint();};
       legendEl.appendChild(d);
     });
-  }
-
-  function eur(v){
-    var sign=v<0?"-":(v>0?"+":"");
-    return sign+Math.abs(v).toLocaleString("fr-FR",{minimumFractionDigits:0,maximumFractionDigits:0})+" EUR";
-  }
-
-  // Tableau "Gain net" : aller-retour achat->revente, net de frais PEA (et d'impot si retrait).
-  function renderTable(){
-    var rows=state.series.filter(function(s){return s.tab===state.tab && s.x && s.x.length;})
-      .map(function(s){return {s:s, r:netGain(s)};})
-      .sort(function(a,c){return c.r.gain-a.r.gain;});
-
-    // Seuil de rentabilite : perf brute qui annule le gain net, avec les frais courants.
-    var m=Math.max(0,parseFloat(montantEl.value)||0);
-    var sample=rows.length?rows[0].s:{tab:state.tab,tk:""};
-    var cBuy=(scenarioEl.value==="boursomarkets"&&sample.tab==="panier")?0:courtage(m);
-    var ttf=ttfDue(sample,m), costIn=m+cBuy+ttf;
-    // break-even : grossOut*(1 - courtage vente) = costIn, avec courtage vente ~0,50%
-    var seuilPct=m>0?((costIn/((1-COURTAGE_PLAFOND)*m) -1)*100):0;
-    seuilEl.innerHTML="Seuil de rentabilite "+(sample.tab==="valeur"?"(hors actions etrangeres) ":"")+
-      "&asymp; <b>+"+seuilPct.toFixed(2)+"%</b> de perf brute";
-
-    var taxOn=parseFloat(fiscEl.value)>0;
-    var h='<table class="gn"><thead><tr>'+
-      '<th class="nm">Valeur</th><th>Brut</th><th>Frais A/R</th>'+
-      '<th>Gain net'+(taxOn?" (net impot)":"")+'</th><th>%</th></tr></thead><tbody>';
-    rows.forEach(function(o){
-      var s=o.s,r=o.r;
-      var g=r.gain, cls=g>0.5?"up":(g<-0.5?"down":"flat");
-      var fr=(r.ttf>0?'<span class="ttf" title="dont TTF '+eur(-r.ttf)+'">':'')+
-             Math.round(r.fraisAR).toLocaleString("fr-FR")+" EUR"+(r.ttf>0?'</span>':'');
-      h+='<tr><td class="nm">'+s.name+'<span class="tk">'+s.tk+'</span></td>'+
-         '<td class="mono">'+(s.pct>=0?"+":"")+Number(s.pct).toFixed(1)+'%</td>'+
-         '<td class="mono">'+fr+'</td>'+
-         '<td class="net '+cls+'">'+eur(g)+'</td>'+
-         '<td class="net '+cls+'">'+(r.pctNet>=0?"+":"")+r.pctNet.toFixed(2)+'%</td></tr>';
-    });
-    h+='</tbody></table>';
-    tblEl.innerHTML=h;
   }
 
   // ===== Vue Journee — intraday live (Yahoo Finance via proxy CORS) ==========
@@ -470,13 +393,10 @@
   function paint(){ if(state.view==="intra") drawIntra(); else draw(); }
 
   function setView(){
-    var net=state.view==="net", intra=state.view==="intra";
-    scopeEl.style.display=net?"none":"";
-    tblEl.classList.toggle("show",net);
-    paramsEl.classList.toggle("show",net);
+    var intra=state.view==="intra";
+    periodeEl.style.display=intra?"none":"";   // la vue Journee couvre une seance, pas de profondeur
     intrabarEl.classList.toggle("show",intra);
-    if(net){ legendEl.style.display=""; renderTable(); }
-    else if(intra){ resize(); refreshIntra(); }
+    if(intra){ resize(); refreshIntra(); }
     else { legendEl.style.display=""; resize(); }
   }
 
@@ -520,7 +440,7 @@
       ctx.fillStyle=is100?"rgba(255,210,63,.7)":"#46555C";ctx.textAlign="right";
       ctx.fillText(v.toFixed(0),PADL-8,y);
     }
-    var months=monthTicks(b.tmin,b.tmax);
+    var months=timeTicks(b.tmin,b.tmax);
     ctx.textAlign="center";ctx.textBaseline="top";
     months.forEach(function(m){
       var x=X(m.t);
@@ -579,6 +499,20 @@
     var raw=(max-min)/n,mag=Math.pow(10,Math.floor(Math.log(raw)/Math.LN10)),norm=raw/mag,step;
     if(norm<1.5)step=1;else if(norm<3)step=2;else if(norm<7)step=5;else step=10;return step*mag;
   }
+  // Sur une fenetre courte, les reperes mensuels sont trop rares : on passe au pas
+  // hebdomadaire (etiquette jj/mm) en dessous d'environ deux mois et demi.
+  function timeTicks(tmin,tmax){
+    var jours=(tmax-tmin)/86400000;
+    if(jours>75) return monthTicks(tmin,tmax);
+    var out=[],d=new Date(tmin);d.setHours(0,0,0,0);
+    d.setDate(d.getDate()+((8-d.getDay())%7));            // premier lundi de la fenetre
+    var pas=jours>40?7:(jours>18?7:3);
+    while(d.getTime()<=tmax){
+      out.push({t:d.getTime(),label:("0"+d.getDate()).slice(-2)+"/"+("0"+(d.getMonth()+1)).slice(-2)});
+      d.setDate(d.getDate()+pas);
+    }
+    return out;
+  }
   function monthTicks(tmin,tmax){
     var out=[],d=new Date(tmin);d.setDate(1);d.setHours(0,0,0,0);
     var names=["jan","fev","mar","avr","mai","juin","juil","aout","sep","oct","nov","dec"];
@@ -606,7 +540,7 @@
     var bs=this.querySelectorAll("button");
     for(var i=0;i<bs.length;i++)bs[i].classList.toggle("on",bs[i]===btn);
     buildLegend();
-    if(state.view==="net") renderTable(); else if(state.view==="intra") refreshIntra(); else resize();
+    if(state.view==="intra") refreshIntra(); else resize();
   });
   document.getElementById("viewSeg").addEventListener("click",function(e){
     var btn=e.target.closest("button");if(!btn)return;
@@ -615,14 +549,16 @@
     for(var i=0;i<bs.length;i++)bs[i].classList.toggle("on",bs[i]===btn);
     setView();
   });
-  [montantEl,scenarioEl,fiscEl].forEach(function(el){
-    el.addEventListener("input",function(){ if(state.view==="net") renderTable(); });
-    el.addEventListener("change",function(){ if(state.view==="net") renderTable(); });
+  slPeriodeEl.addEventListener("input",function(){
+    state.mois=parseInt(this.value,10)||6;
+    lbPeriodeEl.textContent=state.mois+" mois";
+    buildLegend();
+    if(state.view!=="intra") paint();
   });
   intraModeEl.addEventListener("change",function(){ state.intra.mode=this.value; refreshIntra(); });
   intraSymEl.addEventListener("change",function(){ state.intra.sym=this.value; refreshIntra(); });
   document.getElementById("refreshBtn").addEventListener("click",function(){ state.intra.data={}; load(); });
-  window.addEventListener("resize",function(){ if(state.view!=="net") resize(); });
+  window.addEventListener("resize",function(){ resize(); });
 
   load();
 })();
