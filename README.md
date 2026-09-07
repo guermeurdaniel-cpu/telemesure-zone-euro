@@ -22,10 +22,17 @@ Telemesure boursiere — zone euro / PEA. Meme moteur que `telemesure-boursiere`
 | PAEEM · Emergents | `PAEEM.PA` | **ETF** (synthetique) | Amundi PEA MSCI Emerging — FR0013412020 | 0,30 % |
 | PAASI · Asie em. | `PAASI.PA` | **ETF** (synthetique) | Amundi PEA MSCI Emerging Asia — FR0013412012 | 0,30 % |
 | WPEA · MSCI World | `WPEA.PA` | **ETF** (synthetique) | iShares MSCI World Swap PEA — IE0002XZSHO1 | 0,20 % |
+| PUST · Nasdaq 100 | `PUST.PA` | **ETF** (synthetique) | Amundi PEA Nasdaq-100 — FR0011871110 | 0,30 % |
 
-Les trois dernieres lignes (PAEEM, PAASI, WPEA) sont **hors zone euro**, ajoutees comme
-reperes de comparaison : emergents monde, Asie emergente, et le MSCI World (coeur de
-portefeuille). Eteins-les dans la legende pour revenir au seul perimetre zone euro.
+Les quatre dernieres lignes (PAEEM, PAASI, WPEA, PUST) sont **hors zone euro**, ajoutees
+comme reperes de comparaison : emergents monde, Asie emergente, le MSCI World (coeur de
+portefeuille) et le Nasdaq 100 (techno US). Eteins-les dans la legende pour revenir au
+seul perimetre zone euro.
+
+Le Nasdaq 100 est suivi par l'ETF **PUST.PA** (cote en euros) et non par l'indice
+`^NDX` (cote en dollars) : ainsi la ligne integre l'effet de change EUR/USD, comme
+WPEA.PA, et la comparaison avec les lignes zone euro reste homogene. C'est aussi un ETF
+accumulant, donc en total return (voir la note methodologie ci-dessous).
 
 Lecture des trois crans zone euro -> Europe : **EuroStoxx 50** (50 leaders, concentre)
 < **MSCI EMU** (~225 valeurs, toujours zone euro, moins concentre) < **MSCI Europe /
@@ -37,8 +44,8 @@ replication synthetique cote PCEU).
 Les lignes ne sont pas toutes calculees pareil :
 - Les **indices prix** (`^STOXX50E`, `^FCHI`, `FTSEMIB.MI`, `^IBEX`, `^AEX`)
   excluent les dividendes.
-- Les **ETF accumulants** (`CEMU.AS`, `PCEU.PA`, `MEUD.PA`) et le **DAX** sont en
-  total return (dividendes reinvestis).
+- Les **ETF accumulants** (`CEMU.AS`, `PCEU.PA`, `MEUD.PA`, `PUST.PA`) et le **DAX**
+  sont en total return (dividendes reinvestis).
 
 En base 100, les lignes total return derivent donc vers le haut d'environ le rendement
 du dividende (~1,5 a 2 % sur 6 mois pour la zone euro) par rapport aux indices prix.
