@@ -30,7 +30,7 @@ PANIERS = [
     # --- agregats larges ---
     ("^STOXX50E",  "EuroStoxx 50",     "panier", "#00E5C7", True),   # indice zone euro, 50 leaders
     ("CEMU.AS",    "MSCI EMU",         "panier", "#E36BE0", False),  # ETF iShares Core MSCI EMU, zone euro ~225 (physique)
-    ("PCEU.PA",    "MSCI Europe (PEA)especial","panier", "#C98BFF", False),  # ETF Amundi PEA MSCI Europe, Europe large (synthetique)
+    ("PCEU.PA",    "MSCI Europe (PEA)","panier", "#C98BFF", False),  # ETF Amundi PEA MSCI Europe, Europe large (synthetique)
     ("MEUD.PA",    "Stoxx Europe 600", "panier", "#5BD1E6", False),  # ETF Amundi Core Stoxx Europe 600, Europe 600 (TER 0,07%)
     # --- indices nationaux zone euro ---
     ("^FCHI",      "CAC 40",           "panier", "#FFB000", False),  # France
