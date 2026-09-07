@@ -30,7 +30,7 @@ PANIERS = [
     # --- agregats larges ---
     ("^STOXX50E",  "EuroStoxx 50",     "panier", "#00E5C7", True),   # indice zone euro, 50 leaders
     ("CEMU.AS",    "MSCI EMU",         "panier", "#E36BE0", False),  # ETF iShares Core MSCI EMU, zone euro ~225 (physique)
-    ("PCEU.PA",    "MSCI Europe (PEA)","panier", "#C98BFF", False),  # ETF Amundi PEA MSCI Europe, Europe large (synthetique)
+    ("PCEU.PA",    "MSCI Europe (PEA)especial","panier", "#C98BFF", False),  # ETF Amundi PEA MSCI Europe, Europe large (synthetique)
     ("MEUD.PA",    "Stoxx Europe 600", "panier", "#5BD1E6", False),  # ETF Amundi Core Stoxx Europe 600, Europe 600 (TER 0,07%)
     # --- indices nationaux zone euro ---
     ("^FCHI",      "CAC 40",           "panier", "#FFB000", False),  # France
@@ -41,8 +41,9 @@ PANIERS = [
     # --- emergents (hors zone euro, ETF Amundi PEA synthetiques, pour comparaison) ---
     ("PAEEM.PA",   "PAEEM - Emergents","panier", "#FF8C42", False),  # Amundi PEA MSCI Emerging (monde) FR0013412020, TER 0,30%
     ("PAASI.PA",   "PAASI - Asie em.", "panier", "#B7E04B", False),  # Amundi PEA MSCI Emerging Asia FR0013412012, TER ~0,30%
-    # --- reference monde (coeur de portefeuille) ---
+    # --- references hors Europe (coeur de portefeuille + comparaison techno US) ---
     ("WPEA.PA",    "WPEA - MSCI World","panier", "#F2F2F2", False),  # iShares MSCI World Swap PEA IE0002XZSHO1, TER 0,20%
+    ("PUST.PA",    "PUST - Nasdaq 100","panier", "#A9C2D9", False),  # Amundi PEA Nasdaq-100 FR0011871110, EUR, synthetique, TER 0,30%
 ]
 
 # ----------------------------------------------------------------------------
