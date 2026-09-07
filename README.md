@@ -39,6 +39,17 @@ Lecture des trois crans zone euro -> Europe : **EuroStoxx 50** (50 leaders, conc
 Stoxx 600** (Europe large, incluant Royaume-Uni et Suisse pour le Stoxx 600, d'ou la
 replication synthetique cote PCEU).
 
+## Curseur de profondeur — 1 a 6 mois
+
+Sous les onglets, un curseur regle la **fenetre affichee**, de **1 a 6 mois**.
+`data.json` contient toujours 6 mois : le curseur ne relance aucune requete, il
+retaille et **rebase les courbes a 100 sur la premiere seance de la fenetre**. Les
+pourcentages de la legende sont recalcules sur cette meme fenetre — le classement a
+1 mois n'a donc rien a voir avec celui a 6 mois. Sous ~2,5 mois, l'axe des dates passe
+d'un pas mensuel a un pas hebdomadaire (etiquettes `jj/mm`).
+
+Le curseur est masque dans la vue **Journee**, qui ne couvre qu'une seance.
+
 ### Note methodologie — prix vs total return
 
 Les lignes ne sont pas toutes calculees pareil :
@@ -67,34 +78,13 @@ fond de grandes capi zone euro (LVMH, L'Oreal, TotalEnergies, Airbus, Schneider,
 BNP). Pour ajouter/retirer un titre, edite la liste `VALEURS` dans `scripts/fetch_data.py`
 (un tuple par ligne : ticker, nom, "valeur", couleur, gras).
 
-## Vue Gain net — aller-retour net de frais PEA
+## Vue Gain net — retiree
 
-La vue **Gain net** (bouton *Gain net* a cote de *Courbes*) simule, pour chaque ligne
-de l'onglet courant, un **achat puis revente** sur la fenetre, et affiche le gain reel
-en euros et en %, classe du meilleur au moins bon. Tu saisis le **montant par ligne**,
-le **scenario de courtage** et la **fiscalite**.
-
-Frais modelises (PEA BoursoBank) :
-- **Courtage** plafonne au max legal **0,50 % par ordre** sur PEA (forfait Decouverte :
-  1,99 EUR < 500 EUR, 0,60 % au-dela, le tout plafonne a 0,50 %). Soit **~1 % aller-retour**.
-- **0 EUR** de droits de garde / frais de tenue / inactivite.
-- **BoursoMarkets** : certains ETF (iShares, Amundi, Xtrackers) sont a **0 % de courtage
-  a l'achat** — mais la **revente reste a 0,50 %**. D'ou ~0,5 % A/R sur ces ETF.
-- **TTF 0,40 % a l'achat** sur les **actions francaises > 1 Md EUR** (Air Liquide, Sanofi,
-  Pernod Ricard, LVMH, TotalEnergies, Airbus, Schneider, L'Oreal, BNP...). **Jamais** sur
-  ETF, indices, ni titres etrangers (ASML `.AS`, SAP `.DE`). Detectee par `tab=valeur` + `.PA`.
-- **TER de l'ETF** : non ajoute, il est **deja dans le cours** (lignes ETF en total return).
-- **Fiscalite** : par defaut **arbitrage interne = 0 impot** (l'impot ne se declenche qu'au
-  *retrait* du PEA, pas sur une revente interne). Le selecteur simule un retrait : **17,2 %**
-  de prelevements sociaux sur le gain si PEA > 5 ans, **30 %** (PFU, cloture) si < 5 ans.
-
-Les taux sont des constantes en haut du `<script>` de `index.html`
-(`COURTAGE_PLAFOND`, `TTF`...) : ajuste-les si ton forfait differe.
-
-> Limite : le courtage est identique quel que soit l'instrument a montant egal, donc il
-> decale toutes les lignes du meme pourcentage et ne change pas le classement ; ce qui
-> rebat les cartes entre lignes, c'est la **TTF** (actions FR vs etrangeres/ETF) et la
-> gratuite **BoursoMarkets** a l'achat.
+La vue **Gain net** (aller-retour achat/revente net des frais PEA : courtage plafonne,
+TTF, fiscalite au retrait) a ete **supprimee le 07/09/2026**, jugee sans interet a
+l'usage. Le courtage decalait toutes les lignes du meme pourcentage et ne changeait pas
+le classement. Le code est recuperable dans l'historique git (avant le commit
+« Retire la vue Gain net »).
 
 ## Mise en route
 
