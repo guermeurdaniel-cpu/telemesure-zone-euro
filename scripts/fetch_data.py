@@ -64,6 +64,7 @@ VALEURS = [
     ("ASML.AS", "ASML",           "valeur", "#C98BFF", False),
     ("SAP.DE",  "SAP",            "valeur", "#FF6FA5", False),
     ("BNP.PA",  "BNP Paribas",    "valeur", "#8FE388", False),
+    ("VETO.PA", "Vetoquinol",     "valeur", "#E8A87C", False),  # demande 11/09/2026, Euronext Paris FR0004186856
 ]
 
 SERIES = PANIERS + VALEURS
