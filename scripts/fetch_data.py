@@ -65,6 +65,7 @@ VALEURS = [
     ("SAP.DE",  "SAP",            "valeur", "#FF6FA5", False),
     ("BNP.PA",  "BNP Paribas",    "valeur", "#8FE388", False),
     ("VETO.PA", "Vetoquinol",     "valeur", "#E8A87C", False),  # demande 11/09/2026, Euronext Paris FR0004186856
+    ("ORA.PA",  "Orange",         "valeur", "#FF4B3E", False),  # demande 02/10/2026, Euronext Paris FR0000133308
 ]
 
 SERIES = PANIERS + VALEURS
