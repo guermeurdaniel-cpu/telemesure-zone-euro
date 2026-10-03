@@ -1,95 +1,92 @@
 # telemesure-zone-euro
 
-Telemesure boursiere — zone euro / PEA. Meme moteur que `telemesure-boursiere`
-(canvas base 100 + scraper yfinance + GitHub Actions quotidien), avec deux onglets :
+Palmarès PEA et portefeuille, en performance relative base 100.
+Page refondue le 3 octobre 2026 : les anciens onglets Paniers et Valeurs ont disparu.
 
-- **Paniers** : indices zone euro (agregats deja constitues).
-- **Valeurs** : titres individuels eligibles PEA, allumables/eteignables.
+## Ce que montre la page
 
-## Onglet Paniers — agregats traces
+- **Les cinq plus fortes hausses et les cinq plus fortes baisses** parmi environ
+  120 grandes et moyennes valeurs françaises éligibles au PEA, sur une fenêtre de
+  **1 à 6 mois** réglée au curseur. Le classement est recalculé dans la page à chaque
+  position du curseur : les dix valeurs affichées changent avec la fenêtre.
+- **Les lignes du portefeuille**, tracées en trait plus épais.
+- Toutes les courbes sont ramenées à **100 au début de la fenêtre**.
 
-| Ligne (chart) | Ticker Yahoo | Nature | Support PEA / ISIN | TER |
-|---|---|---|---|---|
-| EuroStoxx 50 | `^STOXX50E` | indice (prix) | iShares Core / HSBC EURO STOXX 50 — IE00B53L3W79 / IE000MWUQBJ0 | 0,10 % / 0,05 % |
-| MSCI EMU | `CEMU.AS` | **ETF** (physique) | iShares Core MSCI EMU — IE00B53QG562 | 0,12 % |
-| MSCI Europe (PEA) | `PCEU.PA` | **ETF** (synthetique) | Amundi PEA MSCI Europe — part ~37 EUR | 0,25 % |
-| Stoxx Europe 600 | `MEUD.PA` | **ETF** (physique) | Amundi Core Stoxx Europe 600 — LU0908500753 | 0,07 % |
-| CAC 40 | `^FCHI` | indice (prix) | Amundi CAC 40 — FR0007052782 | 0,25 % |
-| DAX | `^GDAXI` | indice (total return) | iShares Core DAX — DE0005933931 | ~0,16 % |
-| FTSE MIB | `FTSEMIB.MI` | indice (prix) | Amundi FTSE MIB | ~0,35 % |
-| IBEX 35 | `^IBEX` | indice (prix) | Amundi IBEX 35 | ~0,30 % |
-| AEX | `^AEX` | indice (prix) | iShares AEX — IE00B0M62Y33 | ~0,30 % |
-| PAEEM · Emergents | `PAEEM.PA` | **ETF** (synthetique) | Amundi PEA MSCI Emerging — FR0013412020 | 0,30 % |
-| PAASI · Asie em. | `PAASI.PA` | **ETF** (synthetique) | Amundi PEA MSCI Emerging Asia — FR0013412012 | 0,30 % |
-| WPEA · MSCI World | `WPEA.PA` | **ETF** (synthetique) | iShares MSCI World Swap PEA — IE0002XZSHO1 | 0,20 % |
-| PUST · Nasdaq 100 | `PUST.PA` | **ETF** (synthetique) | Amundi PEA Nasdaq-100 — FR0011871110 | 0,30 % |
+Deux vues, par le sélecteur du haut :
 
-Les quatre dernieres lignes (PAEEM, PAASI, WPEA, PUST) sont **hors zone euro**, ajoutees
-comme reperes de comparaison : emergents monde, Asie emergente, le MSCI World (coeur de
-portefeuille) et le Nasdaq 100 (techno US). Eteins-les dans la legende pour revenir au
-seul perimetre zone euro.
+- **Courbes** : l'historique sur la fenêtre choisie.
+- **Journée** : la séance en direct (Yahoo Finance, pas de 5 min, par le relais
+  Cloudflare), sur les mêmes lignes. Mode Base 100 (toutes les lignes, 100 = clôture
+  de la veille) ou Cours réel (une seule valeur).
 
-Le Nasdaq 100 est suivi par l'ETF **PUST.PA** (cote en euros) et non par l'indice
-`^NDX` (cote en dollars) : ainsi la ligne integre l'effet de change EUR/USD, comme
-WPEA.PA, et la comparaison avec les lignes zone euro reste homogene. C'est aussi un ETF
-accumulant, donc en total return (voir la note methodologie ci-dessous).
+## Lecture au doigt
 
-Lecture des trois crans zone euro -> Europe : **EuroStoxx 50** (50 leaders, concentre)
-< **MSCI EMU** (~225 valeurs, toujours zone euro, moins concentre) < **MSCI Europe /
-Stoxx 600** (Europe large, incluant Royaume-Uni et Suisse pour le Stoxx 600, d'ou la
-replication synthetique cote PCEU).
+- **Un doigt** : le niveau de chaque courbe à la date visée. La lecture s'efface
+  quand on lève le doigt.
+- **Deux doigts** : la variation en pourcentage de chaque courbe entre les deux
+  dates. La lecture reste affichée quand on lève les doigts ; un nouvel appui
+  l'efface. « n.d. » signale une courbe qui ne couvre pas les deux dates.
+- Un appui sur une ligne de la légende allume ou éteint sa courbe.
 
-## Curseur de profondeur — 1 a 6 mois
+## D'où viennent les données
 
-Sous les onglets, un curseur regle la **fenetre affichee**, de **1 a 6 mois**.
-`data.json` contient toujours 6 mois : le curseur ne relance aucune requete, il
-retaille et **rebase les courbes a 100 sur la premiere seance de la fenetre**. Les
-pourcentages de la legende sont recalcules sur cette meme fenetre — le classement a
-1 mois n'a donc rien a voir avec celui a 6 mois. Sous ~2,5 mois, l'axe des dates passe
-d'un pas mensuel a un pas hebdomadaire (etiquettes `jj/mm`).
+Un seul script, `scripts/fetch_data.py`, lancé par le workflow
+`.github/workflows/update.yml` : chaque jour ouvré à 06:00 UTC, à la main (Run
+workflow), et à chaque modification du script. Il écrit `data.json` (environ
+370 ko : six mois de cours pour chaque série).
 
-Le curseur est masque dans la vue **Journee**, qui ne couvre qu'une seance.
+### L'univers classé
 
-### Note methodologie — prix vs total return
+Le SBF 120 hors foncières cotées (les SIIC ne sont pas éligibles au PEA). La liste
+est **figée à la main** dans `UNIVERS`, en tête du script, à la date du
+3 octobre 2026. L'indice étant revu chaque trimestre, elle est à relire de temps en
+temps. Elle n'a pas besoin d'être exacte à la valeur près : elle sert de vivier.
 
-Les lignes ne sont pas toutes calculees pareil :
-- Les **indices prix** (`^STOXX50E`, `^FCHI`, `FTSEMIB.MI`, `^IBEX`, `^AEX`)
-  excluent les dividendes.
-- Les **ETF accumulants** (`CEMU.AS`, `PCEU.PA`, `MEUD.PA`, `PUST.PA`) et le **DAX**
-  sont en total return (dividendes reinvestis).
+Pour ajouter ou retirer une valeur : une ligne `("TICKER.PA", "Nom")` dans `UNIVERS`.
+Attention aux suffixes Yahoo : `.PA` pour Paris, `.AS` pour Amsterdam
+(ArcelorMittal, Aperam), `.BR` pour Bruxelles (Solvay).
 
-En base 100, les lignes total return derivent donc vers le haut d'environ le rendement
-du dividende (~1,5 a 2 % sur 6 mois pour la zone euro) par rapport aux indices prix.
-Pour un comparatif strictement homogene, deux options : passer toutes les lignes en
-ETF accumulants, ou remplacer `^STOXX50E` par sa version *Net/Gross Return*. Dis-le si
-tu veux que je bascule tout le panier en ETF total return.
+Un ticker que Yahoo ne reconnaît plus n'arrête pas le script : il est rangé dans la
+clé `echecs` de `data.json` et affiché en rouge dans la barre d'état de la page.
 
-Pour suivre l'ETF reel d'une ligne encore en indice, remplace son ticker dans `PANIERS`
-par le mnemonique Euronext correspondant ; si Yahoo renvoie FAIL, garde l'indice.
+### Le portefeuille
 
-Autres elargissements possibles (a ajouter dans `PANIERS`) :
-- **Sectoriels zone euro** (banques, defense, energie...) via ETF sectoriels eligibles PEA.
-- **MSCI EMU Value / Small Cap** pour un biais factoriel.
+Les lignes ne sont **pas écrites dans ce dépôt**. Elles sont lues à chaque passage
+dans le catalogue `supports.txt` du dépôt `mes-actions` : ajouter une valeur là-bas la
+fait apparaître ici au passage suivant. Seul le catalogue est lu (intitulé,
+identifiant, enveloppe, part d'actions) ; jamais les quantités ni les apports.
 
-## Onglet Valeurs
+- Support coté (`source = yahoo`) : cours Yahoo, comme l'univers classé.
+- Fonds non coté : valeurs liquidatives lues dans `history.json` de `mes-actions`.
+  Cet historique ne commence que le **18 juin 2026** : sur une fenêtre plus profonde,
+  la courbe part de 100 à sa première date connue et la légende affiche « depuis ».
+  Le défaut se résorbe de lui-même, l'historique s'allongeant chaque jour.
+- Un support dont la part d'actions est nulle (monétaire, obligataire) est éteint au
+  chargement ; un appui dans la légende l'allume.
+- Une valeur à la fois détenue et classée dans le palmarès apparaît une seule fois,
+  dans le palmarès, avec la mention « portefeuille ».
 
-Amorce : Air Liquide (`AI.PA`), Sanofi (`SAN.PA`), Pernod Ricard (`RI.PA`), complete d'un
-fond de grandes capi zone euro (LVMH, L'Oreal, TotalEnergies, Airbus, Schneider, ASML, SAP,
-BNP). Pour ajouter/retirer un titre, edite la liste `VALEURS` dans `scripts/fetch_data.py`
-(un tuple par ligne : ticker, nom, "valeur", couleur, gras).
+Si `mes-actions` passe un jour en privé, ces deux lectures échoueront : la page
+affichera le palmarès sans le portefeuille, avec l'erreur dans la barre d'état.
 
-## Vue Gain net — retiree
+## Règles du classement
 
-La vue **Gain net** (aller-retour achat/revente net des frais PEA : courtage plafonne,
-TTF, fiscalite au retrait) a ete **supprimee le 07/09/2026**, jugee sans interet a
-l'usage. Le courtage decalait toutes les lignes du meme pourcentage et ne changeait pas
-le classement. Le code est recuperable dans l'historique git (avant le commit
-« Retire la vue Gain net »).
+- Variation entre la première séance de la fenêtre et la dernière séance connue.
+- Cours **ajustés des dividendes** (dividendes réinvestis) : les chiffres diffèrent
+  légèrement des variations de cours brutes affichées par un courtier.
+- Une valeur sans historique sur toute la fenêtre (introduction récente), ou dont la
+  cotation s'est arrêtée depuis plus de dix jours, est écartée du classement.
+
+## Limites connues
+
+- Yahoo peut avoir une séance de retard ou un trou dans une série.
+- La liste de l'univers vieillit : voir plus haut.
+- Le fichier `.github/workflows/palmares.yml` est un reste d'essai du 3 octobre 2026
+  (vérification du droit d'écriture du connecteur). Il ne se lance qu'à la main et ne
+  fait rien : il peut être supprimé.
 
 ## Mise en route
 
-1. Active **GitHub Pages** (Settings > Pages > branche `main`, dossier `/root`).
-2. Onglet **Actions** > *Mise a jour des cours* > **Run workflow** pour generer
-   `data.json` une premiere fois. Le scraper imprime `ok` / `FAIL` par ligne :
-   remplace tout ticker en FAIL.
-3. Ensuite, mise a jour automatique chaque jour ouvre a 06:00 UTC.
+1. GitHub Pages actif sur la branche `main`, dossier racine.
+2. Onglet Actions > Mise a jour des cours > Run workflow pour régénérer `data.json`.
+   Le script imprime `ok` ou `FAIL` par ligne.
