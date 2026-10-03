@@ -97,6 +97,24 @@ affichera le palmarès sans le portefeuille, avec l'erreur dans la barre d'état
 - Une valeur sans historique sur toute la fenêtre (introduction récente), ou dont la
   cotation s'est arrêtée depuis plus de dix jours, est écartée du classement.
 
+## Études hors ligne (dossier analyse)
+
+La page n'utilise pas ce dossier. Il sert aux essais de stratégies menés à part.
+
+- `scripts/historique.py`, lancé par `.github/workflows/analyse.yml` : **uniquement à
+  la main** (Actions > Analyse historique > Run workflow) ou quand ce script est
+  modifié. Jamais de passage automatique.
+- `analyse/historique.json` (environ 2,8 Mo) : cinq ans de cours quotidiens ajustés et
+  l'historique des dividendes versés, pour tout l'univers et trois témoins (deux ETF
+  MSCI World et le CAC 40).
+- `analyse/fondamentaux.json` : capitalisation, dette, trésorerie, marges et secteur
+  lus chez Yahoo. Ce sont les **valeurs du jour**, pas celles du passé : s'en servir
+  pour juger une décision passée revient à connaître l'avenir.
+
+Limite à garder en tête pour tout essai sur ces fichiers : l'univers est celui
+d'aujourd'hui. Les sociétés sorties de la cote ou de l'indice n'y figurent pas, ce
+qui embellit les stratégies d'achat de valeurs en baisse.
+
 ## Limites connues
 
 - Yahoo peut avoir une séance de retard ou un trou dans une série.
