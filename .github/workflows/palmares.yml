@@ -1,0 +1,14 @@
+name: Palmares deux mois (essai)
+
+# Fichier de test : verifie que le jeton du connecteur peut ecrire dans .github/workflows.
+# Declenchement manuel uniquement : ce workflow ne se lance jamais tout seul.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  essai:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Essai
+        run: echo "Fichier de test - aucune action"
