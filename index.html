@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Telemesure boursiere — Zone euro / PEA</title>
+<title>Télémesure boursière — Palmarès PEA &amp; portefeuille</title>
 <link rel="apple-touch-icon" href="icon.png">
 <style>
   :root{
@@ -34,13 +34,17 @@
   .status{font-family:ui-monospace,monospace;font-size:11.5px;color:var(--dim);padding:8px 6px 2px;min-height:18px;}
   .status .err{color:#FF7A8A}
   .legend{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:6px 14px;margin-top:14px;}
+  .lgh{grid-column:1/-1;font-family:ui-monospace,monospace;font-size:10.5px;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--dimmer);margin-top:8px;}
+  .lgh:first-child{margin-top:0}
   .lg{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:9px;border:1px solid transparent;
     cursor:pointer;transition:.12s;background:var(--panel);}
   .lg:hover{border-color:var(--line)}
   .lg.off{opacity:.32}
   .swatch{width:11px;height:11px;border-radius:3px;flex:none;box-shadow:0 0 8px currentColor}
   .lg .nm{font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
-  .lg .tk{font-family:ui-monospace,monospace;font-size:10.5px;color:var(--dimmer);display:block;font-weight:400}
+  .lg .tk{font-family:ui-monospace,monospace;font-size:10.5px;color:var(--dimmer);display:block;font-weight:400;
+    overflow:hidden;text-overflow:ellipsis}
   .lg .pct{font-family:ui-monospace,monospace;font-size:12.5px;font-weight:600;flex:none}
   .up{color:#54E0A0}.down{color:#FF7A8A}.flat{color:var(--dim)}
   .notes{margin-top:22px;border-top:1px solid var(--line);padding-top:14px;color:var(--dim);font-size:12.5px;line-height:1.6}
@@ -50,7 +54,7 @@
     background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;}
   .intrabar.show{display:flex}
   .intrabar .seuil{margin-left:auto;align-self:center}
-  /* --- curseur de profondeur --- */
+  /* --- curseur de fenetre --- */
   .periode{background:var(--panel);border:1px solid var(--line);border-radius:12px;
     padding:10px 14px 6px;margin:0 0 12px;}
   .periode .hd{display:flex;justify-content:space-between;align-items:baseline;
@@ -70,23 +74,19 @@
 </head>
 <body>
   <span class="eyebrow">Performance relative · base 100</span>
-  <h1>Zone euro &amp; PEA</h1>
-  <p class="sub">Chaque trace est ramenee a <b>100</b> a sa premiere seance de la fenetre, dont la profondeur se regle de <b>1 a 6 mois</b> au curseur. Onglet <b>Paniers</b> : indices zone euro (agregats deja constitues). Onglet <b>Valeurs</b> : titres individuels eligibles PEA, allumables/eteignables d'un clic dans la legende. Tout est en <b>EUR</b> : aucun effet de change. Donnees Yahoo Finance, mises a jour chaque jour ouvre par GitHub Actions.</p>
+  <h1>Palmarès PEA &amp; portefeuille</h1>
+  <p class="sub">Les <b>cinq plus fortes hausses</b> et les <b>cinq plus fortes baisses</b> parmi environ 120 grandes et moyennes valeurs françaises éligibles au PEA, sur une fenêtre de <b>1 à 6 mois</b> réglée au curseur, avec les lignes de <b>mon portefeuille</b>. Chaque courbe est ramenée à <b>100</b> au début de la fenêtre. Cours Yahoo Finance, dividendes réinvestis, mis à jour chaque jour ouvré par GitHub Actions.</p>
 
   <div class="controls">
-    <div class="seg" id="tabSeg">
-      <button data-t="panier" class="on">Paniers</button>
-      <button data-t="valeur">Valeurs</button>
-    </div>
     <div class="seg" id="viewSeg">
       <button data-v="chart" class="on">Courbes</button>
-      <button data-v="intra">Journee</button>
+      <button data-v="intra">Journée</button>
     </div>
     <button class="refresh" id="refreshBtn">&#8635; Recharger</button>
   </div>
 
   <div class="periode" id="periode">
-    <div class="hd"><span>Profondeur affichee</span><b id="lbPeriode">6 mois</b></div>
+    <div class="hd"><span>Fenêtre du palmarès</span><b id="lbPeriode">6 mois</b></div>
     <input type="range" id="slPeriode" min="1" max="6" step="1" value="6">
   </div>
 
@@ -95,7 +95,7 @@
       <label>Mode</label>
       <select id="intraMode">
         <option value="base100">Base 100 &middot; toutes les lignes</option>
-        <option value="reel">Cours reel &middot; une valeur</option>
+        <option value="reel">Cours réel &middot; une valeur</option>
       </select>
     </div>
     <div class="fld" id="intraSymFld" style="display:none">
@@ -114,37 +114,51 @@
 
 
   <div class="notes">
-    <p><b>Lecture.</b> Onglet Paniers : l'<b>EuroStoxx 50</b> (en gras) sert de reference zone euro ; le <b>MSCI EMU</b> elargit a ~225 valeurs de la zone, le <b>MSCI Europe</b> et le <b>Stoxx Europe 600</b> ouvrent a l'Europe large. Le CAC 40, le DAX, le FTSE MIB, l'IBEX 35 et l'AEX donnent la rotation entre places. Attention : les lignes ETF (CEMU, PCEU, MEUD) et le DAX sont en <b>total return</b>, les indices prix non — d'ou une legere derive (voir README). Onglet Valeurs : amorce sur Air Liquide, Sanofi et Pernod Ricard, complete d'un fond de grandes capi zone euro a retirer selon tes convictions (edite la liste <b>VALEURS</b> dans <b>scripts/fetch_data.py</b>).</p>
-    <p><b>Profondeur.</b> Le curseur choisit la fenetre affichee, de <b>1 a 6 mois</b> (data.json en contient toujours 6). Les courbes sont <b>rebasees a 100 au premier jour de la fenetre</b> et les pourcentages de la legende sont recalcules sur cette meme fenetre : un mois et six mois ne donnent donc pas le meme classement.</p>
-    <p><b>Vue Journee.</b> Evolution intraday du jour, recuperee <b>en direct</b> depuis Yahoo Finance (intervalle 5&nbsp;min) via un proxy CORS &mdash; independante du <b>data.json</b> quotidien. Mode <b>Base 100</b> : chaque ligne visible est ramenee a 100 = <b>cloture de la veille</b> (comparaison en % sur la seance). Mode <b>Cours reel</b> : le cours brut d'une seule valeur, cloture veille en pointilles. Hors seance (week-end, avant ouverture), la derniere seance disponible s'affiche. Un titre sans intraday cote est signale dans la barre d'etat.</p>
+    <p><b>Palmarès.</b> Le curseur fixe la fenêtre, de <b>1 à 6 mois</b>. Le classement est recalculé à chaque position : les dix valeurs affichées changent donc avec la fenêtre, et un mois ne donne pas le même palmarès que six. L'univers classé est le <b>SBF 120 hors foncières</b> (les foncières cotées ne sont pas éligibles au PEA) ; sa liste est figée dans <b>scripts/fetch_data.py</b> et doit être relue de temps en temps, l'indice étant revu chaque trimestre. Une valeur qui n'a pas d'historique sur toute la fenêtre, ou dont la cotation s'est arrêtée, est écartée du classement.</p>
+    <p><b>Portefeuille.</b> Ses lignes sont lues à chaque mise à jour dans le catalogue <b>supports.txt</b> du dépôt mes-actions : ajouter une valeur là-bas la fait apparaître ici, sans rien modifier dans cette page. Seul le catalogue est lu, jamais les quantités ni les apports. Les lignes du portefeuille sont tracées en <b>trait plus épais</b>. Les supports sans actions (monétaire, obligataire) sont éteints au départ : un appui dans la légende les allume. Les fonds non cotés sont suivis par leur valeur liquidative, dont l'historique ne commence que le <b>18 juin 2026</b> : sur une fenêtre plus profonde, leur courbe part de 100 à sa première date connue, et la légende l'indique par la mention « depuis ».</p>
+    <p><b>Lecture au doigt.</b> <b>Un doigt</b> posé sur le graphique donne le niveau de chaque courbe à la date visée. <b>Deux doigts</b> donnent la variation en pourcentage de chaque courbe entre les deux dates ; cette lecture reste affichée quand on lève les doigts, et un nouvel appui l'efface. La mention « n.d. » signale une courbe qui ne couvre pas les deux dates.</p>
+    <p><b>Vue Journée.</b> Évolution de la séance, récupérée <b>en direct</b> depuis Yahoo Finance (pas de 5&nbsp;min) par le relais Cloudflare, indépendamment de la mise à jour quotidienne. Elle porte sur les mêmes lignes que la vue Courbes : le palmarès de la fenêtre choisie et le portefeuille coté. Les fonds non cotés n'y figurent pas. Mode <b>Base 100</b> : chaque ligne visible est ramenée à 100 = <b>clôture de la veille</b>. Mode <b>Cours réel</b> : le cours brut d'une seule valeur, clôture de la veille en pointillés. Hors séance, la dernière séance disponible s'affiche.</p>
+    <p><b>Limites.</b> Les variations incluent les <b>dividendes réinvestis</b> : elles diffèrent légèrement des variations de cours brutes affichées par un courtier. Yahoo peut avoir une séance de retard ou un trou dans une série. Un titre que Yahoo ne reconnaît plus est compté comme indisponible dans la barre d'état.</p>
   </div>
 
 <script>
 (function(){
   "use strict";
-  var state={tab:"panier",view:"chart",mois:6,off:{},series:[],intra:{mode:"base100",sym:null,data:{}}};
+  var state={view:"chart",mois:6,off:{},series:[],meta:{},sel:[],nClasse:0,intra:{mode:"base100",sym:null,data:{}}};
   var cv=document.getElementById("cv"),ctx=cv.getContext("2d");
   var statusEl=document.getElementById("status"),legendEl=document.getElementById("legend");
-  var scopeEl=document.getElementById("scope");
-  var periodeEl=document.getElementById("periode");
   var slPeriodeEl=document.getElementById("slPeriode"),lbPeriodeEl=document.getElementById("lbPeriode");
-  var hover=null;
+  var hover=null;   // lecture a un doigt : abscisse en pixels
+  var deux=null;    // lecture a deux doigts : [x1,x2] en pixels, conservee apres le lacher
   var intrabarEl=document.getElementById("intrabar");
   var intraModeEl=document.getElementById("intraMode");
   var intraSymEl=document.getElementById("intraSym");
   var intraStatusEl=document.getElementById("intraStatus");
 
-  // Fenetre affichee : on ne garde que les seances posterieures a la date de coupure,
-  // et on rebase la serie a 100 sur sa premiere seance de cette fenetre.
-  function coupure(){
+  // Couleurs : un jeu par rang du palmares (la valeur qui occupe le rang change avec la
+  // fenetre), et un jeu fixe pour le portefeuille (chaque ligne garde sa couleur).
+  var COL_HAUSSE=["#54E0A0","#00E5C7","#B7E04B","#5BD1E6","#FFD23F"];
+  var COL_BAISSE=["#FF5470","#FF8C42","#E36BE0","#FF6FA5","#C98BFF"];
+  var COL_PF=["#F2F2F2","#7AA5FF","#A9C2D9","#E8A87C","#9D7CFF","#4DA3FF","#C9D14B","#8FE388","#FFB000","#6FE26F","#DADADA","#3A6BFF"];
+  var JOUR=86400000, TOL=10*JOUR;   // tolerance sur le debut et la fin d'une serie
+
+  function dernier(){
     var last=0;
     state.series.forEach(function(s){ if(s.x&&s.x.length&&s.x[s.x.length-1]>last) last=s.x[s.x.length-1]; });
+    return last;
+  }
+  // Debut de la fenetre : derniere seance connue moins le nombre de mois du curseur.
+  function coupure(){
+    var last=dernier();
     if(!last) return 0;
     var d=new Date(last); d.setMonth(d.getMonth()-state.mois);
     return d.getTime();
   }
+  function jjmm(t){ var d=new Date(t); return ("0"+d.getDate()).slice(-2)+"/"+("0"+(d.getMonth()+1)).slice(-2); }
+  function court(nom,n){ return nom.length>n?nom.slice(0,n-1)+"…":nom; }
 
-  // Vue fenetree d'une serie : memes champs que l'original, x/y tronques et y rebase.
+  // Vue fenetree d'une serie : x/y tronques au debut de la fenetre et y rebase a 100.
+  // partiel = la serie commence apres le debut de la fenetre (historique trop court).
   function fenetre(s,cut){
     var i0=0;
     while(i0<s.x.length-1 && s.x[i0]<cut) i0++;
@@ -153,7 +167,48 @@
     var x=s.x.slice(i0), y=[];
     for(var i=i0;i<s.y.length;i++) y.push(s.y[i]/base*100);
     var pct=y.length?y[y.length-1]-100:0;
-    return {tk:s.tk,name:s.name,tab:s.tab,col:s.col,hero:s.hero,x:x,y:y,pct:pct};
+    return {tk:s.tk,name:s.name,x:x,y:y,pct:pct,partiel:s.x[0]>cut+TOL,debut:x[0]};
+  }
+
+  // Selection affichee : 5 plus fortes hausses, 5 plus fortes baisses, puis le portefeuille.
+  function recalc(){
+    var cut=coupure(), last=dernier(), lst=[];
+    state.series.forEach(function(s){
+      if(!s.mk||!s.x||s.x.length<2) return;
+      if(s.x[0]>cut+TOL) return;                  // pas d'historique sur toute la fenetre
+      if(s.x[s.x.length-1]<last-TOL) return;      // cotation arretee
+      lst.push({s:s,f:fenetre(s,cut)});
+    });
+    lst.sort(function(a,b){return b.f.pct-a.f.pct;});
+    var n=Math.min(5,Math.floor(lst.length/2)), sel=[], pris={};
+    lst.slice(0,n).forEach(function(o,i){ sel.push({s:o.s,f:o.f,role:"haut",col:COL_HAUSSE[i],hero:!!o.s.pf}); pris[o.s.tk]=1; });
+    lst.slice(lst.length-n).reverse().forEach(function(o,i){ sel.push({s:o.s,f:o.f,role:"bas",col:COL_BAISSE[i],hero:!!o.s.pf}); pris[o.s.tk]=1; });
+    state.series.filter(function(s){return s.pf&&s.x&&s.x.length>=2;})
+      .sort(function(a,b){return (a.ord==null?99:a.ord)-(b.ord==null?99:b.ord);})
+      .forEach(function(s,i){
+        if(pris[s.tk]) return;
+        var k=(s.ord==null?i:s.ord)%COL_PF.length;
+        sel.push({s:s,f:fenetre(s,cut),role:"pf",col:COL_PF[k],hero:true});
+      });
+    sel.forEach(function(it){ it.f.col=it.col; it.f.hero=it.hero; });
+    state.sel=sel; state.nClasse=lst.length;
+  }
+  // Eteinte par defaut : une ligne de portefeuille sans actions. Un appui dans la legende prime.
+  function eteinte(it){
+    if(Object.prototype.hasOwnProperty.call(state.off,it.s.tk)) return state.off[it.s.tk];
+    return it.role==="pf" && it.s.on===false;
+  }
+  function visible(){ return state.sel.filter(function(it){return !eteinte(it);}).map(function(it){return it.f;}); }
+  function parTk(tk){ for(var i=0;i<state.sel.length;i++) if(state.sel[i].s.tk===tk) return state.sel[i]; return null; }
+
+  function etat(){
+    var m=state.meta, d=m.generated?new Date(m.generated):null;
+    var stamp=d?d.toLocaleString("fr-FR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"?";
+    var nPf=state.series.filter(function(s){return s.pf;}).length;
+    var txt=state.nClasse+" valeurs classées · "+nPf+" lignes de portefeuille · maj "+stamp;
+    if(m.echecs&&m.echecs.length) txt+=" · <span class='err'>"+m.echecs.length+" indisponible(s) : "+m.echecs.join(", ")+"</span>";
+    if(m.erreur_pf) txt+=" · <span class='err'>"+m.erreur_pf+"</span>";
+    statusEl.innerHTML=txt;
   }
 
   function load(){
@@ -161,66 +216,63 @@
     fetch("./data.json?t="+Date.now()).then(function(r){
       if(!r.ok) throw 0; return r.json();
     }).then(function(j){
-      state.series=j.series||[];
-      var d=j.generated?new Date(j.generated):null;
-      var stamp=d?d.toLocaleString("fr-FR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"?";
-      statusEl.innerHTML=state.series.length+" series · maj "+stamp;
-      buildLegend(); setView();
+      state.series=j.series||[]; state.meta=j;
+      recalc(); etat(); buildLegend(); setView();
     }).catch(function(){
-      statusEl.innerHTML="<span class='err'>data.json introuvable.</span> Lance le workflow GitHub Actions (onglet Actions > Run workflow) pour le generer.";
+      statusEl.innerHTML="<span class='err'>data.json introuvable.</span> Lance le workflow GitHub Actions (onglet Actions > Run workflow) pour le générer.";
     });
   }
 
-  function visible(){
-    var cut=coupure();
-    return state.series.filter(function(s){
-      if(!s.x||!s.x.length) return false;
-      if(state.off[s.tk]) return false;
-      if(s.tab!==state.tab) return false;
-      return true;
-    }).map(function(s){ return fenetre(s,cut); });
-  }
-
   function buildLegend(){
-    var cut=coupure();
-    var inT=state.series.filter(function(s){return s.tab===state.tab;})
-      .map(function(s){ return (s.x&&s.x.length)?fenetre(s,cut):s; });
+    var titres={haut:"Plus fortes hausses · "+state.mois+" mois",bas:"Plus fortes baisses · "+state.mois+" mois",pf:"Mon portefeuille"};
+    var courant=null;
     legendEl.innerHTML="";
-    inT.forEach(function(s){
-      var d=document.createElement("div");
-      d.className="lg"+(state.off[s.tk]?" off":"");
-      var pctTxt=(s.pct>=0?"+":"")+Number(s.pct).toFixed(1)+"%";
-      var cls=s.pct>0.05?"up":(s.pct<-0.05?"down":"flat");
-      d.innerHTML='<span class="swatch" style="background:'+s.col+';color:'+s.col+'"></span>'+
-        '<span class="nm">'+s.name+'<span class="tk">'+s.tk+'</span></span>'+
-        '<span class="pct '+cls+'">'+pctTxt+'</span>';
-      d.onclick=function(){state.off[s.tk]=!state.off[s.tk];buildLegend();if(state.view==="intra")refreshIntra();else paint();};
+    state.sel.forEach(function(it){
+      if(it.role!==courant){
+        courant=it.role;
+        var h=document.createElement("div"); h.className="lgh"; h.textContent=titres[courant]; legendEl.appendChild(h);
+      }
+      var s=it.s,f=it.f,d=document.createElement("div");
+      d.className="lg"+(eteinte(it)?" off":"");
+      var pctTxt=(f.pct>=0?"+":"")+f.pct.toFixed(1)+"%";
+      var cls=f.pct>0.05?"up":(f.pct<-0.05?"down":"flat");
+      var sous=(s.src==="vl"?"fonds":s.tk);
+      if(s.pf) sous+=" · "+(it.role==="pf"?"":"portefeuille ")+s.pf;
+      if(f.partiel) sous+=" · depuis "+jjmm(f.debut);
+      var sw=document.createElement("span"); sw.className="swatch"; sw.style.background=it.col; sw.style.color=it.col;
+      var nm=document.createElement("span"); nm.className="nm"; nm.textContent=s.name;
+      var tk=document.createElement("span"); tk.className="tk"; tk.textContent=sous; nm.appendChild(tk);
+      var pc=document.createElement("span"); pc.className="pct "+cls; pc.textContent=pctTxt;
+      d.appendChild(sw); d.appendChild(nm); d.appendChild(pc);
+      d.onclick=function(){
+        state.off[s.tk]=!eteinte(it);
+        buildLegend();
+        if(state.view==="intra") refreshIntra(); else paint();
+      };
       legendEl.appendChild(d);
     });
   }
 
-  // ===== Vue Journee — intraday live (Yahoo Finance via proxy CORS) ==========
-  // ===== RELAIS PERSO (Cloudflare Worker) — deploye le 22/07/2026 =====
-  // Utilise EN PRIORITE (unshift plus bas). Les deux proxies publics restants
-  // ne sont plus qu'un filet de securite si le Worker tombe.
-  var MON_PROXY = "https://flat-bread-4d06.guermeur-daniel.workers.dev";   // relais perso Cloudflare Worker (prioritaire)
-  // ============================================
+  // ===== Vue Journee — intraday en direct (Yahoo Finance via relais) ==========
+  // Relais perso (Cloudflare Worker), utilise en priorite. Les deux proxies publics
+  // ne sont qu'un filet de securite si le Worker tombe.
+  var MON_PROXY = "https://flat-bread-4d06.guermeur-daniel.workers.dev";
   var PROXIES=[
     function(u){return "https://api.codetabs.com/v1/proxy/?quest="+encodeURIComponent(u);},
     function(u){return "https://api.allorigins.win/raw?url="+encodeURIComponent(u);}
   ];
   if(MON_PROXY){ PROXIES.unshift(function(u){return MON_PROXY+"/?url="+encodeURIComponent(u);}); }
-  var INTRA_ERR="";   // derniere raison d'echec proxy, pour l'afficher dans la barre d'etat
-  var GOOD_PROXY=-1;  // index du dernier proxy qui a fonctionne (essaye en premier ensuite)
+  var INTRA_ERR="";   // derniere raison d'echec, affichee dans la barre d'etat
+  var GOOD_PROXY=-1;  // index du dernier relais qui a fonctionne (essaye en premier ensuite)
   function proxFetch(url){
     var order=[]; if(GOOD_PROXY>=0) order.push(GOOD_PROXY);
     for(var k=0;k<PROXIES.length;k++){ if(k!==GOOD_PROXY) order.push(k); }
     var i=0;
     function tryNext(){
-      if(i>=order.length) return Promise.reject(new Error(INTRA_ERR||"proxies indisponibles"));
+      if(i>=order.length) return Promise.reject(new Error(INTRA_ERR||"relais indisponibles"));
       var idx=order[i++], pu=PROXIES[idx](url);
       var ctl=null; try{ ctl=new AbortController(); }catch(e){}
-      var to=ctl?setTimeout(function(){ INTRA_ERR="timeout proxy"; ctl.abort(); },3000):0;
+      var to=ctl?setTimeout(function(){ INTRA_ERR="délai dépassé"; ctl.abort(); },3000):0;
       return fetch(pu, Object.assign({cache:"no-store"}, ctl?{signal:ctl.signal}:{})).then(function(r){
         clearTimeout(to);
         if(!r.ok){ INTRA_ERR="HTTP "+r.status; throw 0; }
@@ -228,16 +280,15 @@
       }).then(function(t){
         var j;
         try{ j=JSON.parse(t); }
-        catch(e){ INTRA_ERR="reponse non-JSON (proxy bloque ?)"; throw 0; }        // page HTML de blocage
+        catch(e){ INTRA_ERR="réponse non-JSON (relais bloqué ?)"; throw 0; }
         if(!j||!j.chart||!j.chart.result){ INTRA_ERR="format Yahoo inattendu"; throw 0; }
-        GOOD_PROXY=idx;                                                            // ce proxy marche : on le retient
+        GOOD_PROXY=idx;
         return j;
       }).catch(function(){ clearTimeout(to); return tryNext(); });
     }
     return tryNext();
   }
   function intraStatus(txt,err){ intraStatusEl.innerHTML=err?("<span class='err'>"+txt+"</span>"):txt; }
-  function byTk(tk){ for(var i=0;i<state.series.length;i++) if(state.series[i].tk===tk) return state.series[i]; return null; }
   function fmtNum(v){ var d=Math.abs(v)>=1000?0:2; return Number(v).toLocaleString("fr-FR",{minimumFractionDigits:d,maximumFractionDigits:d}); }
 
   function parseIntra(j){
@@ -251,27 +302,29 @@
       return {ok:true,x:x,y:y,prev:prev};
     }catch(e){ return {ok:false}; }
   }
+  // Lignes cotees de la selection (les fonds non cotes n'ont pas de seance).
+  function cotees(){ return state.sel.filter(function(it){return it.s.src==="yahoo";}); }
   function intraNeededSymbols(){
     if(state.intra.mode==="reel") return state.intra.sym?[state.intra.sym]:[];
-    return state.series.filter(function(s){return s.tab===state.tab && !state.off[s.tk];}).map(function(s){return s.tk;});
+    return cotees().filter(function(it){return !eteinte(it);}).map(function(it){return it.s.tk;});
   }
   function intraSummary(){
     var syms=intraNeededSymbols();
     if(!syms.length){ intraStatus("Choisis une valeur."); return; }
     var ko=syms.filter(function(t){var p=state.intra.data[t];return p&&!p.ok;});
-    if(ko.length){ intraStatus(ko.length+" titre(s) sans intraday : "+ko.join(", ")+(INTRA_ERR?" ("+INTRA_ERR+")":""),true); return; }
+    if(ko.length){ intraStatus(ko.length+" titre(s) sans cotation en séance : "+ko.join(", ")+(INTRA_ERR?" ("+INTRA_ERR+")":""),true); return; }
     if(state.intra.mode==="reel"){
       var p=state.intra.data[state.intra.sym];
-      if(p&&p.ok){ var c=(p.y[p.y.length-1]/p.prev-1)*100; intraStatus("Base : cloture veille "+fmtNum(p.prev)+" &middot; jour "+(c>=0?"+":"")+c.toFixed(2)+"%"); }
-      else intraStatus("Base 100 = cloture veille");
-    } else { intraStatus("Base 100 = cloture veille &middot; "+syms.length+" ligne(s)"); }
+      if(p&&p.ok){ var c=(p.y[p.y.length-1]/p.prev-1)*100; intraStatus("Base : clôture veille "+fmtNum(p.prev)+" &middot; jour "+(c>=0?"+":"")+c.toFixed(2)+"%"); }
+      else intraStatus("Base 100 = clôture veille");
+    } else { intraStatus("Base 100 = clôture veille &middot; "+syms.length+" ligne(s)"); }
   }
   function fetchIntraday(syms){
     INTRA_ERR="";
     var todo=syms.filter(function(t){return !state.intra.data[t];});
     if(!todo.length){ paint(); intraSummary(); return; }
     var n=todo.length, done=0, i=0, anyOk=false;
-    intraStatus("Chargement intraday "+done+"/"+n+"...");
+    intraStatus("Chargement de la séance "+done+"/"+n+"...");
     function next(){
       if(i>=todo.length){ paint(); intraSummary(); return; }
       var sym=todo[i++];
@@ -280,8 +333,8 @@
         .catch(function(){ state.intra.data[sym]={ok:false}; })
         .then(function(){
           done++;
-          if(!anyOk && INTRA_ERR){ paint(); intraStatus("Intraday indisponible : "+INTRA_ERR+" (proxies CORS bloques par Yahoo). Solution durable : relais perso MON_PROXY.",true); return; }
-          intraStatus("Chargement intraday "+done+"/"+n+"..."); paint(); next();
+          if(!anyOk && INTRA_ERR){ paint(); intraStatus("Séance indisponible : "+INTRA_ERR+" (relais refusé par Yahoo).",true); return; }
+          intraStatus("Chargement de la séance "+done+"/"+n+"..."); paint(); next();
         });
     }
     next();
@@ -300,27 +353,84 @@
     var reel=state.intra.mode==="reel";
     document.getElementById("intraSymFld").style.display=reel?"":"none";
     legendEl.style.display=(state.view==="intra"&&reel)?"none":"";
-    var inT=state.series.filter(function(s){return s.tab===state.tab;});
-    var cur=state.intra.sym;
+    var lst=cotees(), cur=state.intra.sym;
     intraSymEl.innerHTML="";
-    inT.forEach(function(s){var o=document.createElement("option");o.value=s.tk;o.textContent=s.name+" ("+s.tk+")";intraSymEl.appendChild(o);});
-    if(!cur||!inT.some(function(s){return s.tk===cur;})){ cur=inT.length?inT[0].tk:null; state.intra.sym=cur; }
+    lst.forEach(function(it){var o=document.createElement("option");o.value=it.s.tk;o.textContent=it.s.name+" ("+it.s.tk+")";intraSymEl.appendChild(o);});
+    if(!cur||!lst.some(function(it){return it.s.tk===cur;})){ cur=lst.length?lst[0].s.tk:null; state.intra.sym=cur; }
     if(cur) intraSymEl.value=cur;
   }
   function refreshIntra(){ updateIntraUI(); paint(); fetchIntraday(intraNeededSymbols()); }
+
+  // ===== Bulles de lecture, communes aux deux vues ============================
+  function proche(xs,t){
+    var bi=0,bd=Infinity;
+    for(var i=0;i<xs.length;i++){ var dd=Math.abs(xs[i]-t); if(dd<bd){bd=dd;bi=i;} }
+    return bi;
+  }
+  // lignes : [{col,txt,val,ok}] ; la hauteur de ligne se resserre si la liste est longue.
+  function bulle(bx,bw,titre,lignes,cssH){
+    var by=PADT+4;
+    var rh=Math.max(9,Math.min(15,Math.floor((cssH-by-6-18)/Math.max(1,lignes.length))));
+    var fs=rh>=13?10:(rh>=11?9:8), bh=18+lignes.length*rh+2;
+    ctx.fillStyle="rgba(8,11,15,.92)";ctx.strokeStyle="rgba(94,234,212,.25)";ctx.lineWidth=1;
+    roundRect(bx,by,bw,bh,7);ctx.fill();ctx.stroke();
+    ctx.textAlign="left";ctx.textBaseline="top";
+    ctx.fillStyle="#6F8088";ctx.font="10px ui-monospace,monospace";ctx.fillText(titre,bx+9,by+5);
+    ctx.font=fs+"px ui-monospace,monospace";
+    lignes.forEach(function(l,i){
+      var yy=by+18+i*rh;
+      ctx.fillStyle=l.col;ctx.fillRect(bx+9,yy+2,7,Math.min(7,rh-3));
+      ctx.fillStyle="#D7E2E0";ctx.textAlign="left";ctx.fillText(l.txt,bx+22,yy);
+      ctx.textAlign="right";ctx.fillStyle=l.ok==null?"#6F8088":(l.ok?"#54E0A0":"#FF7A8A");
+      ctx.fillText(l.val,bx+bw-9,yy);
+    });
+    ctx.textAlign="left";
+  }
+  // Lecture a deux doigts : variation de chaque ligne entre les deux abscisses.
+  // rows : [{name,col,x,y}] ; tol : ecart maximal admis entre l'abscisse visee et le point le plus proche.
+  function lectureDeux(rows,tmin,tmax,X,Y,cssW,cssH,plotW,fmt,tol){
+    var lim=function(v){return Math.max(PADL,Math.min(cssW-PADR,v));};
+    var xa=lim(Math.min(deux[0],deux[1])), xb=lim(Math.max(deux[0],deux[1]));
+    var ta=tmin+(xa-PADL)/plotW*(tmax-tmin), tb=tmin+(xb-PADL)/plotW*(tmax-tmin);
+    ctx.fillStyle="rgba(0,229,199,.06)";ctx.fillRect(xa,PADT,xb-xa,cssH-PADB-PADT);
+    ctx.strokeStyle="rgba(215,226,224,.30)";ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(xa,PADT);ctx.lineTo(xa,cssH-PADB);ctx.moveTo(xb,PADT);ctx.lineTo(xb,cssH-PADB);ctx.stroke();
+    var res=[];
+    rows.forEach(function(r){
+      var ia=proche(r.x,ta), ib=proche(r.x,tb);
+      var couvre=ib>ia && Math.abs(r.x[ia]-ta)<=tol && Math.abs(r.x[ib]-tb)<=tol;
+      if(!couvre){ res.push({r:r,pct:null}); return; }
+      res.push({r:r,pct:(r.y[ib]/r.y[ia]-1)*100});
+      ctx.fillStyle=r.col;ctx.shadowColor=r.col;ctx.shadowBlur=6;
+      ctx.beginPath();ctx.arc(X(r.x[ia]),Y(r.y[ia]),2.6,0,7);ctx.fill();
+      ctx.beginPath();ctx.arc(X(r.x[ib]),Y(r.y[ib]),2.6,0,7);ctx.fill();ctx.shadowBlur=0;
+    });
+    res.sort(function(a,c){ if(a.pct==null) return 1; if(c.pct==null) return -1; return c.pct-a.pct; });
+    var bw=Math.min(164,cssW-PADL-PADR-8);
+    // la bulle va dans la plus large des trois zones : a gauche, entre les doigts, a droite
+    var zones=[[PADL,xa-8],[xa+8,xb-8],[xb+8,cssW-PADR]], best=zones[0];
+    zones.forEach(function(z){ if(z[1]-z[0]>best[1]-best[0]) best=z; });
+    var bx=best[0]+Math.max(0,(best[1]-best[0]-bw)/2);
+    bx=Math.max(PADL+2,Math.min(cssW-PADR-bw-2,bx));
+    bulle(bx,bw,fmt(ta)+" → "+fmt(tb),res.map(function(o){
+      return {col:o.r.col,txt:court(o.r.name,15),
+        val:o.pct==null?"n.d.":((o.pct>=0?"+":"")+o.pct.toFixed(1)+"%"),ok:o.pct==null?null:o.pct>=0};
+    }),cssH);
+  }
+  function hhmm(t){ return new Date(t).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}); }
 
   function drawIntra(){
     var cssW=cv.clientWidth,cssH=cv.clientHeight;
     ctx.clearRect(0,0,cssW,cssH);
     var reel=state.intra.mode==="reel", rows=[];
     if(reel){
-      var p=state.intra.data[state.intra.sym], m=byTk(state.intra.sym);
-      if(p&&p.ok) rows.push({tk:state.intra.sym,name:m?m.name:state.intra.sym,col:m?m.col:"#00E5C7",x:p.x,y:p.y.slice(),prev:p.prev,hero:true});
+      var p=state.intra.data[state.intra.sym], m=parTk(state.intra.sym);
+      if(p&&p.ok) rows.push({tk:state.intra.sym,name:m?m.s.name:state.intra.sym,col:m?m.col:"#00E5C7",x:p.x,y:p.y.slice(),prev:p.prev,hero:true});
     } else {
-      state.series.forEach(function(s){
-        if(s.tab!==state.tab||state.off[s.tk]) return;
-        var pp=state.intra.data[s.tk]; if(!pp||!pp.ok) return;
-        rows.push({tk:s.tk,name:s.name,col:s.col,x:pp.x,y:pp.y.map(function(v){return v/pp.prev*100;}),prev:100,hero:s.hero});
+      cotees().forEach(function(it){
+        if(eteinte(it)) return;
+        var pp=state.intra.data[it.s.tk]; if(!pp||!pp.ok) return;
+        rows.push({tk:it.s.tk,name:it.s.name,col:it.col,x:pp.x,y:pp.y.map(function(v){return v/pp.prev*100;}),prev:100,hero:it.hero});
       });
     }
     if(!rows.length) return;
@@ -338,12 +448,12 @@
       var gy=Y(v);
       ctx.strokeStyle="rgba(94,234,212,.07)";ctx.lineWidth=1;
       ctx.beginPath();ctx.moveTo(PADL,gy);ctx.lineTo(cssW-PADR,gy);ctx.stroke();
-      ctx.fillStyle="#46555C";ctx.textAlign="right";ctx.fillText(reel?fmtNum(v):v.toFixed(0),PADL-8,gy);
+      ctx.fillStyle="#46555C";ctx.textAlign="right";ctx.fillText(reel?fmtNum(v):v.toFixed(step<1?1:0),PADL-8,gy);
     }
     var yref=Y(refV);
     ctx.setLineDash([4,4]);ctx.strokeStyle="rgba(255,210,63,.32)";ctx.lineWidth=1;
     ctx.beginPath();ctx.moveTo(PADL,yref);ctx.lineTo(cssW-PADR,yref);ctx.stroke();ctx.setLineDash([]);
-    ctx.fillStyle="rgba(255,210,63,.7)";ctx.textAlign="left";ctx.textBaseline="bottom";ctx.fillText("cloture veille",PADL+4,yref-2);
+    ctx.fillStyle="rgba(255,210,63,.7)";ctx.textAlign="left";ctx.textBaseline="bottom";ctx.fillText("clôture veille",PADL+4,yref-2);
     var hrs=hourTicks(tmin,tmax);
     ctx.textAlign="center";ctx.textBaseline="top";
     hrs.forEach(function(h){var x=X(h.t);
@@ -354,34 +464,27 @@
       ctx.beginPath();
       for(var i=0;i<r.x.length;i++){var x=X(r.x[i]),y=Y(r.y[i]);if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}
       ctx.lineJoin="round";ctx.strokeStyle=r.col;ctx.globalAlpha=0.92;
-      ctx.shadowColor=r.col;ctx.shadowBlur=r.hero?9:5;ctx.lineWidth=r.hero?2.4:1.4;
+      ctx.shadowColor=r.col;ctx.shadowBlur=r.hero?8:5;ctx.lineWidth=r.hero?2.2:1.4;
       ctx.stroke();ctx.shadowBlur=0;ctx.globalAlpha=1;
       var lx=X(r.x[r.x.length-1]),ly=Y(r.y[r.y.length-1]);
       ctx.fillStyle=r.col;ctx.beginPath();ctx.arc(lx,ly,2.8,0,7);ctx.fill();
     });
-    if(hover!=null){
+    if(deux){
+      lectureDeux(rows,tmin,tmax,X,Y,cssW,cssH,plotW,hhmm,20*60000);
+    } else if(hover!=null && hover>=PADL && hover<=cssW-PADR){
       var tx=tmin+(hover-PADL)/plotW*(tmax-tmin);
-      if(hover>=PADL && hover<=cssW-PADR){
-        ctx.strokeStyle="rgba(215,226,224,.22)";ctx.lineWidth=1;
-        ctx.beginPath();ctx.moveTo(hover,PADT);ctx.lineTo(hover,cssH-PADB);ctx.stroke();
-        var hr=[];
-        rows.forEach(function(r){var bi=0,bd=Infinity;for(var i=0;i<r.x.length;i++){var dd=Math.abs(r.x[i]-tx);if(dd<bd){bd=dd;bi=i;}}hr.push({r:r,bi:bi,v:r.y[bi]});
-          ctx.fillStyle=r.col;ctx.shadowColor=r.col;ctx.shadowBlur=6;ctx.beginPath();ctx.arc(X(r.x[bi]),Y(r.y[bi]),2.6,0,7);ctx.fill();ctx.shadowBlur=0;});
-        hr.sort(function(a,c){return c.v-a.v;});
-        var dt=new Date(hr[0].r.x[hr[0].bi]),lbl=dt.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
-        var bw=reel?152:140,bx=hover>cssW/2?hover-bw-10:hover+10,by=PADT+4,bh=18+hr.length*15;
-        ctx.fillStyle="rgba(8,11,15,.92)";ctx.strokeStyle="rgba(94,234,212,.25)";
-        roundRect(bx,by,bw,bh,7);ctx.fill();ctx.stroke();
-        ctx.textAlign="left";ctx.textBaseline="top";
-        ctx.fillStyle="#6F8088";ctx.font="10px ui-monospace,monospace";ctx.fillText(lbl,bx+9,by+5);
-        hr.forEach(function(o,i){var yy=by+18+i*15;
-          ctx.fillStyle=o.r.col;ctx.fillRect(bx+9,yy+3,7,7);
-          ctx.fillStyle="#D7E2E0";ctx.font="10px ui-monospace,monospace";ctx.fillText(o.r.tk,bx+22,yy);
-          ctx.textAlign="right";
-          var disp=reel?fmtNum(o.v):((o.v-100>=0?"+":"")+(o.v-100).toFixed(2)+"%");
-          ctx.fillStyle=(o.v>=(reel?o.r.prev:100))?"#54E0A0":"#FF7A8A";
-          ctx.fillText(disp,bx+bw-9,yy);ctx.textAlign="left";});
-      }
+      ctx.strokeStyle="rgba(215,226,224,.22)";ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(hover,PADT);ctx.lineTo(hover,cssH-PADB);ctx.stroke();
+      var hr=[];
+      rows.forEach(function(r){var bi=proche(r.x,tx);hr.push({r:r,bi:bi,v:r.y[bi]});
+        ctx.fillStyle=r.col;ctx.shadowColor=r.col;ctx.shadowBlur=6;ctx.beginPath();ctx.arc(X(r.x[bi]),Y(r.y[bi]),2.6,0,7);ctx.fill();ctx.shadowBlur=0;});
+      hr.sort(function(a,c){return c.v-a.v;});
+      var bw=Math.min(164,cssW-PADL-PADR-8),bx=hover>cssW/2?hover-bw-10:hover+10;
+      bx=Math.max(PADL+2,Math.min(cssW-PADR-bw-2,bx));
+      bulle(bx,bw,hhmm(hr[0].r.x[hr[0].bi]),hr.map(function(o){
+        return {col:o.r.col,txt:court(o.r.name,15),
+          val:reel?fmtNum(o.v):((o.v-100>=0?"+":"")+(o.v-100).toFixed(2)+"%"),ok:o.v>=(reel?o.r.prev:100)};
+      }),cssH);
     }
     if(reel){
       var r0=rows[0],lastv=r0.y[r0.y.length-1],chg=(lastv/r0.prev-1)*100;
@@ -394,8 +497,8 @@
 
   function setView(){
     var intra=state.view==="intra";
-    periodeEl.style.display=intra?"none":"";   // la vue Journee couvre une seance, pas de profondeur
     intrabarEl.classList.toggle("show",intra);
+    deux=null; hover=null;
     if(intra){ resize(); refreshIntra(); }
     else { legendEl.style.display=""; resize(); }
   }
@@ -405,7 +508,7 @@
 
   function resize(){
     var cssW=cv.clientWidth||cv.parentNode.clientWidth-12;
-    var cssH=Math.max(280,Math.min(460,Math.round(cssW*0.56)));
+    var cssH=Math.max(320,Math.min(460,Math.round(cssW*0.56)));
     cv.style.height=cssH+"px";
     cv.width=Math.round(cssW*DPR);cv.height=Math.round(cssH*DPR);
     ctx.setTransform(DPR,0,0,DPR,0,0);paint();
@@ -440,6 +543,7 @@
       ctx.fillStyle=is100?"rgba(255,210,63,.7)":"#46555C";ctx.textAlign="right";
       ctx.fillText(v.toFixed(0),PADL-8,y);
     }
+    if(!vis.length) return;
     var months=timeTicks(b.tmin,b.tmax);
     ctx.textAlign="center";ctx.textBaseline="top";
     months.forEach(function(m){
@@ -449,45 +553,37 @@
       ctx.fillStyle="#46555C";ctx.fillText(m.label,x,cssH-PADB+6);
     });
 
-    vis.forEach(function(s){
+    // le palmares d'abord, le portefeuille (trait epais) par-dessus
+    vis.slice().sort(function(a,c){return (a.hero?1:0)-(c.hero?1:0);}).forEach(function(s){
       ctx.beginPath();
       for(var i=0;i<s.x.length;i++){
         var x=X(s.x[i]),y=Y(s.y[i]);
         if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
       }
       ctx.lineJoin="round";ctx.strokeStyle=s.col;ctx.globalAlpha=0.9;
-      ctx.shadowColor=s.col;ctx.shadowBlur=s.hero?9:5;ctx.lineWidth=s.hero?2.4:1.3;
+      ctx.shadowColor=s.col;ctx.shadowBlur=s.hero?8:5;ctx.lineWidth=s.hero?2.2:1.3;
       ctx.stroke();ctx.shadowBlur=0;ctx.globalAlpha=1;
     });
 
-    if(hover!=null && vis.length){
+    if(deux){
+      lectureDeux(vis,b.tmin,b.tmax,X,Y,cssW,cssH,plotW,jjmm,5*JOUR);
+    } else if(hover!=null && hover>=PADL && hover<=cssW-PADR){
       var tx=b.tmin+(hover-PADL)/plotW*(b.tmax-b.tmin);
-      if(hover>=PADL && hover<=cssW-PADR){
-        ctx.strokeStyle="rgba(215,226,224,.22)";ctx.lineWidth=1;
-        ctx.beginPath();ctx.moveTo(hover,PADT);ctx.lineTo(hover,cssH-PADB);ctx.stroke();
-        var rows=[];
-        vis.forEach(function(s){
-          var bi=0,bd=Infinity;
-          for(var i=0;i<s.x.length;i++){var dd=Math.abs(s.x[i]-tx);if(dd<bd){bd=dd;bi=i;}}
-          var nv=s.y[bi];rows.push({s:s,nv:nv});
-          ctx.fillStyle=s.col;ctx.shadowColor=s.col;ctx.shadowBlur=6;
-          ctx.beginPath();ctx.arc(X(s.x[bi]),Y(nv),2.6,0,7);ctx.fill();ctx.shadowBlur=0;
-        });
-        rows.sort(function(a,c){return c.nv-a.nv;});
-        var dt=new Date(tx),lbl=("0"+dt.getDate()).slice(-2)+"/"+("0"+(dt.getMonth()+1)).slice(-2);
-        var bw=132,bx=hover>cssW/2?hover-bw-10:hover+10,by=PADT+4,bh=18+rows.length*15;
-        ctx.fillStyle="rgba(8,11,15,.92)";ctx.strokeStyle="rgba(94,234,212,.25)";
-        roundRect(bx,by,bw,bh,7);ctx.fill();ctx.stroke();
-        ctx.textAlign="left";ctx.textBaseline="top";
-        ctx.fillStyle="#6F8088";ctx.font="10px ui-monospace,monospace";ctx.fillText(lbl,bx+9,by+5);
-        rows.forEach(function(r,i){
-          var yy=by+18+i*15;
-          ctx.fillStyle=r.s.col;ctx.fillRect(bx+9,yy+3,7,7);
-          ctx.fillStyle="#D7E2E0";ctx.font="10px ui-monospace,monospace";ctx.fillText(r.s.tk,bx+22,yy);
-          ctx.textAlign="right";ctx.fillStyle=(r.nv>=100?"#54E0A0":"#FF7A8A");
-          ctx.fillText(r.nv.toFixed(1),bx+bw-9,yy);ctx.textAlign="left";
-        });
-      }
+      ctx.strokeStyle="rgba(215,226,224,.22)";ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(hover,PADT);ctx.lineTo(hover,cssH-PADB);ctx.stroke();
+      var rows=[];
+      vis.forEach(function(s){
+        if(s.x[0]>tx+5*JOUR) return;                 // la courbe ne commence pas encore a cette date
+        var bi=proche(s.x,tx),nv=s.y[bi];rows.push({s:s,nv:nv});
+        ctx.fillStyle=s.col;ctx.shadowColor=s.col;ctx.shadowBlur=6;
+        ctx.beginPath();ctx.arc(X(s.x[bi]),Y(nv),2.6,0,7);ctx.fill();ctx.shadowBlur=0;
+      });
+      rows.sort(function(a,c){return c.nv-a.nv;});
+      var bw=Math.min(164,cssW-PADL-PADR-8),bx=hover>cssW/2?hover-bw-10:hover+10;
+      bx=Math.max(PADL+2,Math.min(cssW-PADR-bw-2,bx));
+      bulle(bx,bw,jjmm(tx),rows.map(function(r){
+        return {col:r.s.col,txt:court(r.s.name,15),val:r.nv.toFixed(1),ok:r.nv>=100};
+      }),cssH);
     }
   }
 
@@ -502,20 +598,20 @@
   // Sur une fenetre courte, les reperes mensuels sont trop rares : on passe au pas
   // hebdomadaire (etiquette jj/mm) en dessous d'environ deux mois et demi.
   function timeTicks(tmin,tmax){
-    var jours=(tmax-tmin)/86400000;
+    var jours=(tmax-tmin)/JOUR;
     if(jours>75) return monthTicks(tmin,tmax);
     var out=[],d=new Date(tmin);d.setHours(0,0,0,0);
     d.setDate(d.getDate()+((8-d.getDay())%7));            // premier lundi de la fenetre
-    var pas=jours>40?7:(jours>18?7:3);
+    var pas=jours>18?7:3;
     while(d.getTime()<=tmax){
-      out.push({t:d.getTime(),label:("0"+d.getDate()).slice(-2)+"/"+("0"+(d.getMonth()+1)).slice(-2)});
+      out.push({t:d.getTime(),label:jjmm(d.getTime())});
       d.setDate(d.getDate()+pas);
     }
     return out;
   }
   function monthTicks(tmin,tmax){
     var out=[],d=new Date(tmin);d.setDate(1);d.setHours(0,0,0,0);
-    var names=["jan","fev","mar","avr","mai","juin","juil","aout","sep","oct","nov","dec"];
+    var names=["jan","fév","mar","avr","mai","juin","juil","août","sep","oct","nov","déc"];
     while(d.getTime()<=tmax){
       if(d.getTime()>=tmin)out.push({t:d.getTime(),label:names[d.getMonth()]});
       d.setMonth(d.getMonth()+1);
@@ -523,25 +619,36 @@
     return out;
   }
 
-  function onMove(e){
-    var rect=cv.getBoundingClientRect();
-    var cx=(e.touches?e.touches[0].clientX:e.clientX)-rect.left;hover=cx;paint();
+  // ===== Gestes ================================================================
+  // Un doigt (ou la souris) : lecture a la date visee, effacee au lacher.
+  // Deux doigts : variation entre les deux dates, conservee au lacher ; un nouvel appui l'efface.
+  function abscisses(e){
+    var rect=cv.getBoundingClientRect(),out=[];
+    for(var i=0;i<e.touches.length&&i<2;i++) out.push(e.touches[i].clientX-rect.left);
+    return out;
   }
-  function onLeave(){hover=null;paint();}
-  cv.addEventListener("mousemove",onMove);
-  cv.addEventListener("mouseleave",onLeave);
-  cv.addEventListener("touchstart",onMove,{passive:true});
-  cv.addEventListener("touchmove",onMove,{passive:true});
-  cv.addEventListener("touchend",onLeave);
-
-  document.getElementById("tabSeg").addEventListener("click",function(e){
-    var btn=e.target.closest("button");if(!btn)return;
-    state.tab=btn.getAttribute("data-t");
-    var bs=this.querySelectorAll("button");
-    for(var i=0;i<bs.length;i++)bs[i].classList.toggle("on",bs[i]===btn);
-    buildLegend();
-    if(state.view==="intra") refreshIntra(); else resize();
+  cv.addEventListener("mousemove",function(e){
+    var rect=cv.getBoundingClientRect(); hover=e.clientX-rect.left; paint();
   });
+  cv.addEventListener("mouseleave",function(){ hover=null; paint(); });
+  cv.addEventListener("mousedown",function(){ if(deux){ deux=null; paint(); } });
+  function auToucher(e){
+    if(e.touches.length>=2){
+      deux=abscisses(e); hover=null;
+      if(e.cancelable) e.preventDefault();        // pas de zoom de page pendant la lecture
+      paint(); return;
+    }
+    if(e.type==="touchstart") deux=null;          // un nouvel appui efface la lecture a deux doigts
+    if(deux) return;                              // un doigt reste pose apres une lecture a deux doigts
+    hover=abscisses(e)[0]; paint();
+  }
+  cv.addEventListener("touchstart",auToucher,{passive:false});
+  cv.addEventListener("touchmove",auToucher,{passive:false});
+  function auLacher(e){ if(e.touches&&e.touches.length>0) return; hover=null; paint(); }
+  cv.addEventListener("touchend",auLacher);
+  cv.addEventListener("touchcancel",auLacher);
+  cv.addEventListener("gesturestart",function(e){ e.preventDefault(); });   // Safari : pas de pincement sur le graphe
+
   document.getElementById("viewSeg").addEventListener("click",function(e){
     var btn=e.target.closest("button");if(!btn)return;
     state.view=btn.getAttribute("data-v");
@@ -552,13 +659,14 @@
   slPeriodeEl.addEventListener("input",function(){
     state.mois=parseInt(this.value,10)||6;
     lbPeriodeEl.textContent=state.mois+" mois";
-    buildLegend();
-    if(state.view!=="intra") paint();
+    deux=null;
+    recalc(); etat(); buildLegend();
+    if(state.view==="intra") refreshIntra(); else paint();
   });
-  intraModeEl.addEventListener("change",function(){ state.intra.mode=this.value; refreshIntra(); });
-  intraSymEl.addEventListener("change",function(){ state.intra.sym=this.value; refreshIntra(); });
-  document.getElementById("refreshBtn").addEventListener("click",function(){ state.intra.data={}; load(); });
-  window.addEventListener("resize",function(){ resize(); });
+  intraModeEl.addEventListener("change",function(){ state.intra.mode=this.value; deux=null; refreshIntra(); });
+  intraSymEl.addEventListener("change",function(){ state.intra.sym=this.value; deux=null; refreshIntra(); });
+  document.getElementById("refreshBtn").addEventListener("click",function(){ state.intra.data={}; deux=null; load(); });
+  window.addEventListener("resize",function(){ deux=null; resize(); });
 
   load();
 })();
