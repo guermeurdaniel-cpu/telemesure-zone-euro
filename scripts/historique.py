@@ -7,8 +7,8 @@ Ce script ne sert PAS a la page : il est lance a la main (onglet Actions >
 Analyse historique > Run workflow) ou a chaque modification de ce fichier, et
 ecrit deux fichiers dans le dossier analyse/ :
 
-  - historique.json   : 5 ans de cours quotidiens ajustes des dividendes et des
-                        divisions, plus l'historique des dividendes verses, pour
+  - historique.json   : cours quotidiens depuis 2010, ajustes des dividendes et
+                        des divisions, plus l'historique des dividendes verses, pour
                         toutes les valeurs de l'univers (liste UNIVERS de
                         fetch_data.py) et quelques temoins.
                         Par ticker : d = jours (nombre de jours depuis 1970),
@@ -37,7 +37,7 @@ TEMOINS = [
     ("WPEA.PA", "ETF MSCI World (WPEA)"),
     ("^FCHI",   "CAC 40"),
 ]
-PERIODE = "5y"
+DEBUT = "2010-01-01"       # profondeur de l'historique
 DOSSIER = os.path.join(os.path.dirname(__file__), "..", "analyse")
 CLES = [
     "shortName", "sector", "industry", "currency", "marketCap",
@@ -57,7 +57,7 @@ def jour(ts):
 
 def cours(tickers):
     out = {}
-    df = yf.download(tickers, period=PERIODE, interval="1d", auto_adjust=True,
+    df = yf.download(tickers, start=DEBUT, interval="1d", auto_adjust=True,
                      actions=True, group_by="ticker", threads=True, progress=False)
     for tk in tickers:
         try:
@@ -93,10 +93,10 @@ def main():
     os.makedirs(DOSSIER, exist_ok=True)
     horodatage = datetime.now(timezone.utc).isoformat(timespec="seconds")
 
-    print("Cours sur %s pour %d tickers..." % (PERIODE, len(tickers)))
+    print("Cours depuis le %s pour %d tickers..." % (DEBUT, len(tickers)))
     series = cours(tickers)
     with open(os.path.join(DOSSIER, "historique.json"), "w", encoding="utf-8") as f:
-        json.dump({"generated": horodatage, "periode": PERIODE, "noms": noms,
+        json.dump({"generated": horodatage, "debut": DEBUT, "noms": noms,
                    "temoins": [t for t, _ in TEMOINS], "series": series},
                   f, ensure_ascii=False, separators=(",", ":"))
     print("historique.json : %d series" % len(series))
