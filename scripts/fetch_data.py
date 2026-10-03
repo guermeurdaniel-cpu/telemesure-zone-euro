@@ -66,6 +66,12 @@ VALEURS = [
     ("BNP.PA",  "BNP Paribas",    "valeur", "#8FE388", False),
     ("VETO.PA", "Vetoquinol",     "valeur", "#E8A87C", False),  # demande 11/09/2026, Euronext Paris FR0004186856
     ("ORA.PA",  "Orange",         "valeur", "#FF4B3E", False),  # demande 02/10/2026, Euronext Paris FR0000133308
+    # --- plus fortes baisses PEA aout-septembre 2026 versant un dividende (demande 03/10/2026) ---
+    ("ACA.PA",  "Credit Agricole",  "valeur", "#2E9E5B", False),  # Euronext Paris FR0000045072
+    ("SGO.PA",  "Saint-Gobain",     "valeur", "#3A6BFF", False),  # Euronext Paris FR0000125007
+    ("GLE.PA",  "Societe Generale", "valeur", "#DADADA", False),  # Euronext Paris FR0000130809
+    ("KER.PA",  "Kering",           "valeur", "#C4A35A", False),  # Euronext Paris FR0000121485
+    ("MT.AS",   "ArcelorMittal",    "valeur", "#2EC4B6", False),  # Euronext Amsterdam LU1598757687 (droit luxembourgeois, eligible PEA)
 ]
 
 SERIES = PANIERS + VALEURS
