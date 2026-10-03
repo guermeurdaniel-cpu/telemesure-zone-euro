@@ -104,16 +104,26 @@ La page n'utilise pas ce dossier. Il sert aux essais de stratégies menés à pa
 - `scripts/historique.py`, lancé par `.github/workflows/analyse.yml` : **uniquement à
   la main** (Actions > Analyse historique > Run workflow) ou quand ce script est
   modifié. Jamais de passage automatique.
-- `analyse/historique.json` (environ 2,8 Mo) : cinq ans de cours quotidiens ajustés et
-  l'historique des dividendes versés, pour tout l'univers et trois témoins (deux ETF
-  MSCI World et le CAC 40).
+- `analyse/historique.json` (environ 8,6 Mo) : cours quotidiens ajustés depuis 2010 et
+  historique des dividendes versés, pour tout l'univers et trois témoins (deux ETF
+  MSCI World et le CAC 40). La profondeur se règle par la constante `DEBUT` du script.
 - `analyse/fondamentaux.json` : capitalisation, dette, trésorerie, marges et secteur
   lus chez Yahoo. Ce sont les **valeurs du jour**, pas celles du passé : s'en servir
   pour juger une décision passée revient à connaître l'avenir.
 
-Limite à garder en tête pour tout essai sur ces fichiers : l'univers est celui
-d'aujourd'hui. Les sociétés sorties de la cote ou de l'indice n'y figurent pas, ce
-qui embellit les stratégies d'achat de valeurs en baisse.
+Limites à garder en tête pour tout essai sur ces fichiers :
+
+- L'univers est celui d'aujourd'hui. Les sociétés sorties de la cote ou de l'indice
+  n'y figurent pas, ce qui embellit les stratégies d'achat de valeurs en baisse, et
+  de plus en plus à mesure qu'on remonte dans le temps.
+- Deux séries sont faussées par des opérations sur titres que Yahoo corrige mal :
+  Atos (regroupement d'actions fin 2024, variation mensuelle de +14 666 % puis
+  -100 %) et Vivendi (scission de décembre 2024, lue comme une chute de 70 %). Les
+  écarter de tout essai.
+- Une règle trouvée sur une période doit être jugée sur une autre période. Essai du
+  3 octobre 2026 : une règle construite sur 2022-2024 (dividende, faible volatilité,
+  élan) battait la valeur médiane sur 2024-2026, mais faisait moins bien qu'elle sur
+  2011-2022.
 
 ## Limites connues
 
