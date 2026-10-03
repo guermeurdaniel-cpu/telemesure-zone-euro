@@ -75,7 +75,7 @@
 <body>
   <span class="eyebrow">Performance relative · base 100</span>
   <h1>Palmarès PEA &amp; portefeuille</h1>
-  <p class="sub">Les <b>cinq plus fortes hausses</b> et les <b>cinq plus fortes baisses</b> parmi environ 120 grandes et moyennes valeurs françaises éligibles au PEA, sur une fenêtre de <b>1 à 6 mois</b> réglée au curseur, avec les lignes de <b>mon portefeuille</b>. Chaque courbe est ramenée à <b>100</b> au début de la fenêtre. Cours Yahoo Finance, dividendes réinvestis, mis à jour chaque jour ouvré par GitHub Actions.</p>
+  <p class="sub">Les <b>cinq plus fortes hausses</b> et les <b>cinq plus fortes baisses</b> parmi environ 150 valeurs françaises et européennes éligibles au PEA, sur une fenêtre de <b>1 à 6 mois</b> réglée au curseur, avec les lignes de <b>mon portefeuille</b>. Chaque courbe est ramenée à <b>100</b> au début de la fenêtre. Cours Yahoo Finance, dividendes réinvestis, mis à jour chaque jour ouvré par GitHub Actions.</p>
 
   <div class="controls">
     <div class="seg" id="viewSeg">
@@ -114,11 +114,11 @@
 
 
   <div class="notes">
-    <p><b>Palmarès.</b> Le curseur fixe la fenêtre, de <b>1 à 6 mois</b>. Le classement est recalculé à chaque position : les dix valeurs affichées changent donc avec la fenêtre, et un mois ne donne pas le même palmarès que six. L'univers classé est le <b>SBF 120 hors foncières</b> (les foncières cotées ne sont pas éligibles au PEA) ; sa liste est figée dans <b>scripts/fetch_data.py</b> et doit être relue de temps en temps, l'indice étant revu chaque trimestre. Une valeur qui n'a pas d'historique sur toute la fenêtre, ou dont la cotation s'est arrêtée, est écartée du classement.</p>
+    <p><b>Palmarès.</b> Le curseur fixe la fenêtre, de <b>1 à 6 mois</b>. Le classement est recalculé à chaque position : les dix valeurs affichées changent donc avec la fenêtre, et un mois ne donne pas le même palmarès que six. L'univers classé réunit le <b>SBF 120 hors foncières</b> (les foncières cotées ne sont pas éligibles au PEA), quelques valeurs françaises à dividende régulier et une <b>sélection européenne</b> à dividende régulier ou croissant. Sa liste est figée dans <b>scripts/fetch_data.py</b> et doit être relue de temps en temps. Les valeurs cotées hors de Paris, Amsterdam et Bruxelles portent la mention <b>min. 2 500 €</b> : c'est l'ordre minimal imposé dans un PEA BoursoBank sur les autres places européennes. Une valeur qui n'a pas d'historique sur toute la fenêtre, ou dont la cotation s'est arrêtée, est écartée du classement.</p>
     <p><b>Portefeuille.</b> Ses lignes sont lues à chaque mise à jour dans le catalogue <b>supports.txt</b> du dépôt mes-actions : ajouter une valeur là-bas la fait apparaître ici, sans rien modifier dans cette page. Seul le catalogue est lu, jamais les quantités ni les apports. Les lignes du portefeuille sont tracées en <b>trait plus épais</b>. Les supports sans actions (monétaire, obligataire) sont éteints au départ : un appui dans la légende les allume. Les fonds non cotés sont suivis par leur valeur liquidative, dont l'historique ne commence que le <b>18 juin 2026</b> : sur une fenêtre plus profonde, leur courbe part de 100 à sa première date connue, et la légende l'indique par la mention « depuis ».</p>
     <p><b>Lecture au doigt.</b> <b>Un doigt</b> posé sur le graphique donne le niveau de chaque courbe à la date visée. <b>Deux doigts</b> donnent la variation en pourcentage de chaque courbe entre les deux dates ; cette lecture reste affichée quand on lève les doigts, et un nouvel appui l'efface. La mention « n.d. » signale une courbe qui ne couvre pas les deux dates.</p>
     <p><b>Vue Journée.</b> Évolution de la séance, récupérée <b>en direct</b> depuis Yahoo Finance (pas de 5&nbsp;min) par le relais Cloudflare, indépendamment de la mise à jour quotidienne. Elle porte sur les mêmes lignes que la vue Courbes : le palmarès de la fenêtre choisie et le portefeuille coté. Les fonds non cotés n'y figurent pas. Mode <b>Base 100</b> : chaque ligne visible est ramenée à 100 = <b>clôture de la veille</b>. Mode <b>Cours réel</b> : le cours brut d'une seule valeur, clôture de la veille en pointillés. Hors séance, la dernière séance disponible s'affiche.</p>
-    <p><b>Limites.</b> Les variations incluent les <b>dividendes réinvestis</b> : elles diffèrent légèrement des variations de cours brutes affichées par un courtier. Yahoo peut avoir une séance de retard ou un trou dans une série. Un titre que Yahoo ne reconnaît plus est compté comme indisponible dans la barre d'état.</p>
+    <p><b>Limites.</b> Les variations incluent les <b>dividendes réinvestis</b> : elles diffèrent légèrement des variations de cours brutes affichées par un courtier. Yahoo peut avoir une séance de retard ou un trou dans une série. Les deux valeurs danoises cotent en couronnes, monnaie arrimée à l'euro : leur variation est donnée en couronnes. Un titre que Yahoo ne reconnaît plus est compté comme indisponible dans la barre d'état.</p>
   </div>
 
 <script>
@@ -156,6 +156,8 @@
   }
   function jjmm(t){ var d=new Date(t); return ("0"+d.getDate()).slice(-2)+"/"+("0"+(d.getMonth()+1)).slice(-2); }
   function court(nom,n){ return nom.length>n?nom.slice(0,n-1)+"…":nom; }
+  // Places au tarif Euronext habituel : Paris, Amsterdam, Bruxelles. Ailleurs, ordre minimal de 2 500 EUR en PEA.
+  function horsEuronext(tk){ return !/\.(PA|AS|BR)$/.test(tk); }
 
   // Vue fenetree d'une serie : x/y tronques au debut de la fenetre et y rebase a 100.
   // partiel = la serie commence apres le debut de la fenetre (historique trop court).
@@ -238,6 +240,7 @@
       var cls=f.pct>0.05?"up":(f.pct<-0.05?"down":"flat");
       var sous=(s.src==="vl"?"fonds":s.tk);
       if(s.pf) sous+=" · "+(it.role==="pf"?"":"portefeuille ")+s.pf;
+      if(s.src==="yahoo" && horsEuronext(s.tk)) sous+=" · min. 2 500 €";
       if(f.partiel) sous+=" · depuis "+jjmm(f.debut);
       var sw=document.createElement("span"); sw.className="swatch"; sw.style.background=it.col; sw.style.color=it.col;
       var nm=document.createElement("span"); nm.className="nm"; nm.textContent=s.name;
