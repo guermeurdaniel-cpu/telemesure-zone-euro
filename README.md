@@ -6,7 +6,7 @@ Page refondue le 3 octobre 2026 : les anciens onglets Paniers et Valeurs ont dis
 ## Ce que montre la page
 
 - **Les cinq plus fortes hausses et les cinq plus fortes baisses** parmi environ
-  120 grandes et moyennes valeurs françaises éligibles au PEA, sur une fenêtre de
+  150 valeurs françaises et européennes éligibles au PEA, sur une fenêtre de
   **1 à 6 mois** réglée au curseur. Le classement est recalculé dans la page à chaque
   position du curseur : les dix valeurs affichées changent avec la fenêtre.
 - **Les lignes du portefeuille**, tracées en trait plus épais.
@@ -33,18 +33,38 @@ Deux vues, par le sélecteur du haut :
 Un seul script, `scripts/fetch_data.py`, lancé par le workflow
 `.github/workflows/update.yml` : chaque jour ouvré à 06:00 UTC, à la main (Run
 workflow), et à chaque modification du script. Il écrit `data.json` (environ
-370 ko : six mois de cours pour chaque série).
+460 ko : six mois de cours pour chaque série).
 
 ### L'univers classé
 
-Le SBF 120 hors foncières cotées (les SIIC ne sont pas éligibles au PEA). La liste
-est **figée à la main** dans `UNIVERS`, en tête du script, à la date du
-3 octobre 2026. L'indice étant revu chaque trimestre, elle est à relire de temps en
-temps. Elle n'a pas besoin d'être exacte à la valeur près : elle sert de vivier.
+Trois blocs, tous éligibles au PEA, dans la liste `UNIVERS` en tête du script :
+
+1. **Le SBF 120 hors foncières cotées** (les SIIC ne sont pas éligibles au PEA).
+2. **Quelques valeurs françaises hors SBF 120** connues pour la régularité de leur
+   dividende : Equasens, Robertet, LDC, Thermador, Vetoquinol, Neurones, Stef.
+3. **Une sélection européenne** à dividende régulier ou croissant, ajoutée le
+   3 octobre 2026 : Wolters Kluwer, ASML, Ahold Delhaize, Heineken, ASR Nederland,
+   UCB, KBC, Ackermans & van Haaren, Sofina, Ageas, D'Ieteren (Amsterdam et
+   Bruxelles), puis Munich Re, Allianz, SAP, Hannover Re, Deutsche Börse, Siemens,
+   Fuchs, Symrise, Novo Nordisk, Coloplast, Inditex, Iberdrola, Generali, Terna,
+   Kone, Sampo et Kerry Group.
+
+La liste est **figée à la main** à la date du 3 octobre 2026. Le SBF 120 étant revu
+chaque trimestre, elle est à relire de temps en temps. Elle n'a pas besoin d'être
+exacte à la valeur près : elle sert de vivier.
 
 Pour ajouter ou retirer une valeur : une ligne `("TICKER.PA", "Nom")` dans `UNIVERS`.
-Attention aux suffixes Yahoo : `.PA` pour Paris, `.AS` pour Amsterdam
-(ArcelorMittal, Aperam), `.BR` pour Bruxelles (Solvay).
+Suffixes Yahoo : `.PA` Paris, `.AS` Amsterdam, `.BR` Bruxelles, `.DE` Francfort,
+`.CO` Copenhague, `.MC` Madrid, `.MI` Milan, `.HE` Helsinki, `.IR` Dublin.
+
+Deux points propres aux valeurs européennes :
+
+- **Ordre minimal.** Hors Paris, Amsterdam et Bruxelles, la brochure BoursoBank
+  impose un ordre minimal de 2 500 € dans un PEA. La page l'indique dans la légende
+  par la mention « min. 2 500 € », déduite du suffixe du ticker.
+- **Devise.** Les deux valeurs danoises cotent en couronnes, monnaie arrimée à
+  l'euro : leur variation est donnée en couronnes. Aucune valeur en couronnes
+  suédoises ou norvégiennes n'a été retenue, pour ne pas mélanger un effet de change.
 
 Un ticker que Yahoo ne reconnaît plus n'arrête pas le script : il est rangé dans la
 clé `echecs` de `data.json` et affiché en rouge dans la barre d'état de la page.
@@ -81,6 +101,8 @@ affichera le palmarès sans le portefeuille, avec l'erreur dans la barre d'état
 
 - Yahoo peut avoir une séance de retard ou un trou dans une série.
 - La liste de l'univers vieillit : voir plus haut.
+- La sélection européenne est un choix éditorial, pas un indice : elle ne couvre pas
+  toutes les valeurs européennes éligibles au PEA.
 - Le fichier `.github/workflows/palmares.yml` est un reste d'essai du 3 octobre 2026
   (vérification du droit d'écriture du connecteur). Il ne se lance qu'à la main et ne
   fait rien : il peut être supprimé.
