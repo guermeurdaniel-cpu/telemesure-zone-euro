@@ -1,0 +1,45 @@
+name: Analyse historique
+
+# Etude hors ligne : 5 ans de cours et de dividendes pour l'univers suivi, plus
+# quelques fondamentaux. Ne tourne jamais tout seul : uniquement a la main, ou
+# quand scripts/historique.py est modifie. La page n'utilise pas ces fichiers.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths: [ 'scripts/historique.py' ]
+
+permissions:
+  contents: write
+
+jobs:
+  analyse:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Dependances
+        run: pip install -r requirements.txt
+
+      - name: Historique et fondamentaux
+        run: python scripts/historique.py
+
+      - name: Commit du dossier analyse
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add analyse
+          if git diff --staged --quiet; then
+            echo "Aucun changement."
+          else
+            git commit -m "analyse : historique et fondamentaux $(date -u +%Y-%m-%dT%H:%MZ)"
+            git pull --rebase
+            git push
+          fi
