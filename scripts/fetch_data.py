@@ -41,8 +41,17 @@ import yfinance as yf
 
 # ----------------------------------------------------------------------------
 # UNIVERS CLASSE
-# Grandes et moyennes valeurs de la Bourse de Paris eligibles au PEA : le
-# SBF 120 hors foncieres cotees (les SIIC ne sont pas eligibles au PEA).
+# Trois blocs, tous eligibles au PEA :
+#   1. Grandes et moyennes valeurs de la Bourse de Paris : le SBF 120 hors
+#      foncieres cotees (les SIIC ne sont pas eligibles au PEA).
+#   2. Quelques valeurs francaises hors SBF 120 connues pour la regularite de
+#      leur dividende.
+#   3. Une selection de valeurs europeennes a dividende regulier ou croissant
+#      (siege dans l'Union europeenne). Celles cotees a Amsterdam et Bruxelles
+#      suivent le tarif Euronext habituel ; pour les autres places, la brochure
+#      BoursoBank impose un ordre minimal de 2 500 EUR dans un PEA, et la page le
+#      rappelle dans la legende. Les deux valeurs danoises cotent en couronnes,
+#      monnaie arrimee a l'euro.
 # LISTE FIGEE, ecrite a la main le 03/10/2026 : la composition de l'indice est
 # revue chaque trimestre (mars, juin, septembre, decembre), il faut donc la
 # relire de temps en temps. Elle n'a pas besoin d'etre exacte a la valeur pres :
@@ -172,8 +181,46 @@ UNIVERS = [
     ("WLN.PA",   "Worldline"),
     ("XFAB.PA",  "X-Fab"),
     ("ABVX.PA",  "Abivax"),
+    # --- bloc 2 : valeurs francaises hors SBF 120, dividende regulier (ajout 03/10/2026) ---
+    ("EQS.PA",   "Equasens"),
+    ("RBT.PA",   "Robertet"),
+    ("LOUP.PA",  "LDC"),
+    ("THEP.PA",  "Thermador"),
+    ("VETO.PA",  "Vetoquinol"),
+    ("NRO.PA",   "Neurones"),
+    ("STF.PA",   "Stef"),
+    # --- bloc 3 : valeurs europeennes, Euronext Amsterdam et Bruxelles (ajout 03/10/2026) ---
+    ("WKL.AS",   "Wolters Kluwer"),
+    ("ASML.AS",  "ASML"),
+    ("AD.AS",    "Ahold Delhaize"),
+    ("HEIA.AS",  "Heineken"),
+    ("ASRNL.AS", "ASR Nederland"),
+    ("UCB.BR",   "UCB"),
+    ("KBC.BR",   "KBC"),
+    ("ACKB.BR",  "Ackermans & van Haaren"),
+    ("SOF.BR",   "Sofina"),
+    ("AGS.BR",   "Ageas"),
+    ("DIE.BR",   "D'Ieteren"),
+    # --- bloc 3 : valeurs europeennes hors Euronext, ordre minimal de 2 500 EUR en PEA ---
+    ("MUV2.DE",  "Munich Re"),              # Francfort
+    ("ALV.DE",   "Allianz"),
+    ("SAP.DE",   "SAP"),
+    ("HNR1.DE",  "Hannover Re"),
+    ("DB1.DE",   "Deutsche Börse"),
+    ("SIE.DE",   "Siemens"),
+    ("FPE3.DE",  "Fuchs"),
+    ("SY1.DE",   "Symrise"),
+    ("NOVO-B.CO", "Novo Nordisk"),          # Copenhague, en couronnes danoises
+    ("COLO-B.CO", "Coloplast"),             # Copenhague, en couronnes danoises
+    ("ITX.MC",   "Inditex"),                # Madrid
+    ("IBE.MC",   "Iberdrola"),
+    ("G.MI",     "Generali"),               # Milan
+    ("TRN.MI",   "Terna"),
+    ("KNEBV.HE", "Kone"),                   # Helsinki
+    ("SAMPO.HE", "Sampo"),
+    ("KRZ.IR",   "Kerry Group"),            # Dublin
 ]
-UNIVERS_LIBELLE = "SBF 120 hors foncières, liste figée au 03/10/2026"
+UNIVERS_LIBELLE = "SBF 120 hors foncières et sélection européenne à dividende régulier, liste figée au 03/10/2026"
 
 # ----------------------------------------------------------------------------
 # PORTEFEUILLE : lu dans le depot mes-actions (public).
