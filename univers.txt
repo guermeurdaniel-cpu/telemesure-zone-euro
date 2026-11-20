@@ -1,0 +1,304 @@
+# UNIVERS CLASSE PAR LE PALMARES (page telemesure-zone-euro)
+#
+# Une ligne par valeur : TICKER-YAHOO ; Nom affiche
+# Lignes vides et lignes commencant par # ignorees.
+# Ajouter ou retirer une valeur = ajouter ou retirer une ligne ici, et rien d'autre.
+# Le fichier est lu par scripts/fetch_data.py (cours de la page) et par
+# scripts/historique.py (dossier analyse).
+#
+# Toutes les valeurs doivent etre eligibles au PEA : siege dans l'Union europeenne
+# ou l'EEE, soumises a l'impot sur les societes. Ne PAS ajouter :
+#   - les foncieres (SIIC francaises, SIR belges, FBI neerlandaises...) ;
+#   - les societes au siege hors UE/EEE, meme cotees a Paris ou Amsterdam
+#     (Shell, Unilever, Aegon depuis son transfert aux Bermudes...).
+#
+# Suffixes Yahoo : .PA Paris, .AS Amsterdam, .BR Bruxelles, .DE Francfort/Xetra,
+# .MI Milan, .MC Madrid, .HE Helsinki, .IR Dublin, .LS Lisbonne, .CO Copenhague.
+# Hors .PA, .AS et .BR, la page affiche « min. 2 500 € » (ordre minimal BoursoBank
+# en PEA sur les autres places).
+#
+# Un ticker que Yahoo ne reconnait plus ne bloque rien : il apparait dans la cle
+# "echecs" de data.json et en rouge dans la barre d'etat de la page.
+
+# === 1. SBF 120 hors foncieres (liste relue le 03/10/2026, l'indice change chaque trimestre)
+AC.PA    ; Accor
+ADP.PA   ; Aéroports de Paris
+AF.PA    ; Air France-KLM
+AI.PA    ; Air Liquide
+AIR.PA   ; Airbus
+ALO.PA   ; Alstom
+ATE.PA   ; Alten
+AMUN.PA  ; Amundi
+ANTIN.PA ; Antin Infrastructure
+APAM.AS  ; Aperam
+MT.AS    ; ArcelorMittal
+AKE.PA   ; Arkema
+ATO.PA   ; Atos
+CS.PA    ; AXA
+AYV.PA   ; Ayvens
+BB.PA    ; Bic
+BIM.PA   ; bioMérieux
+BNP.PA   ; BNP Paribas
+BOL.PA   ; Bolloré
+EN.PA    ; Bouygues
+BVI.PA   ; Bureau Veritas
+CAP.PA   ; Capgemini
+CA.PA    ; Carrefour
+CLARI.PA ; Clariane
+COFA.PA  ; Coface
+ACA.PA   ; Crédit Agricole
+BN.PA    ; Danone
+AM.PA    ; Dassault Aviation
+DSY.PA   ; Dassault Systèmes
+DBG.PA   ; Derichebourg
+EDEN.PA  ; Edenred
+FGR.PA   ; Eiffage
+ELIOR.PA ; Elior
+ELIS.PA  ; Elis
+EMEIS.PA ; Emeis
+ENGI.PA  ; Engie
+ERA.PA   ; Eramet
+EL.PA    ; EssilorLuxottica
+RF.PA    ; Eurazeo
+ERF.PA   ; Eurofins Scientific
+ENX.PA   ; Euronext
+ETL.PA   ; Eutelsat
+EXA.PA   ; Exail Technologies
+EXENS.PA ; Exosens
+FDJU.PA  ; FDJ United
+FRVIA.PA ; Forvia
+GTT.PA   ; GTT
+GNFT.PA  ; Genfit
+GET.PA   ; Getlink
+RMS.PA   ; Hermès
+IDL.PA   ; ID Logistics
+NK.PA    ; Imerys
+ITP.PA   ; Interparfums
+IPN.PA   ; Ipsen
+IPS.PA   ; Ipsos
+DEC.PA   ; JCDecaux
+KER.PA   ; Kering
+OR.PA    ; L'Oréal
+LSS.PA   ; Lectra
+LR.PA    ; Legrand
+FII.PA   ; Lisi
+MC.PA    ; LVMH
+MMT.PA   ; M6 Métropole TV
+MAU.PA   ; Maurel & Prom
+MEDCL.PA ; Medincell
+MRN.PA   ; Mersen
+ML.PA    ; Michelin
+NANO.PA  ; Nanobiotix
+NEX.PA   ; Nexans
+NXI.PA   ; Nexity
+OPM.PA   ; OPmobility
+ORA.PA   ; Orange
+OVH.PA   ; OVHcloud
+RI.PA    ; Pernod Ricard
+PLNW.PA  ; Planisware
+PLX.PA   ; Pluxee
+PUB.PA   ; Publicis
+RCO.PA   ; Rémy Cointreau
+RNO.PA   ; Renault
+RXL.PA   ; Rexel
+RUI.PA   ; Rubis
+SAF.PA   ; Safran
+SGO.PA   ; Saint-Gobain
+SAN.PA   ; Sanofi
+DIM.PA   ; Sartorius Stedim
+SU.PA    ; Schneider Electric
+SCR.PA   ; Scor
+SK.PA    ; SEB
+SESG.PA  ; SES
+GLE.PA   ; Société Générale
+SW.PA    ; Sodexo
+SOI.PA   ; Soitec
+SOLB.BR  ; Solvay
+SOP.PA   ; Sopra Steria
+SPIE.PA  ; Spie
+STLAP.PA ; Stellantis
+STMPA.PA ; STMicroelectronics
+TE.PA    ; Technip Energies
+TEP.PA   ; Teleperformance
+TFI.PA   ; TF1
+HO.PA    ; Thales
+TKO.PA   ; Tikehau Capital
+TTE.PA   ; TotalEnergies
+TRI.PA   ; Trigano
+UBI.PA   ; Ubisoft
+FR.PA    ; Valeo
+VK.PA    ; Vallourec
+VLA.PA   ; Valneva
+VIE.PA   ; Veolia
+VRLA.PA  ; Verallia
+VCT.PA   ; Vicat
+DG.PA    ; Vinci
+VIRP.PA  ; Virbac
+VIRI.PA  ; Viridien
+VIV.PA   ; Vivendi
+VU.PA    ; VusionGroup
+MF.PA    ; Wendel
+WLN.PA   ; Worldline
+XFAB.PA  ; X-Fab
+ABVX.PA  ; Abivax
+
+# === 2. Valeurs francaises hors SBF 120 a dividende regulier (03/10/2026)
+EQS.PA  ; Equasens
+RBT.PA  ; Robertet
+LOUP.PA ; LDC
+THEP.PA ; Thermador
+VETO.PA ; Vetoquinol
+NRO.PA  ; Neurones
+STF.PA  ; Stef
+
+# === 3. Valeurs etrangeres cotees a Paris, Amsterdam ou Bruxelles : tarif Euronext normal, pas de minimum
+# Ajout du 03/10/2026 :
+WKL.AS   ; Wolters Kluwer
+ASML.AS  ; ASML
+AD.AS    ; Ahold Delhaize
+HEIA.AS  ; Heineken
+ASRNL.AS ; ASR Nederland
+UCB.BR   ; UCB
+KBC.BR   ; KBC
+ACKB.BR  ; Ackermans & van Haaren
+SOF.BR   ; Sofina
+AGS.BR   ; Ageas
+DIE.BR   ; D'Ieteren
+# Ajout du 20/11/2026 :
+NOKIA.PA ; Nokia
+ASM.AS   ; ASM International
+BESI.AS  ; BE Semiconductor
+ADYEN.AS ; Adyen
+INGA.AS  ; ING
+ABN.AS   ; ABN AMRO
+NN.AS    ; NN Group
+PHIA.AS  ; Philips
+PRX.AS   ; Prosus
+UMG.AS   ; Universal Music Group
+AKZA.AS  ; Akzo Nobel
+DSFIR.AS ; DSM-Firmenich
+IMCD.AS  ; IMCD
+RAND.AS  ; Randstad
+KPN.AS   ; KPN
+EXO.AS   ; Exor
+FER.AS   ; Ferrovial
+LIGHT.AS ; Signify
+ARCAD.AS ; Arcadis
+AALB.AS  ; Aalberts
+VPK.AS   ; Vopak
+ABI.BR   ; AB InBev
+ARGX.BR  ; argenx
+SYENS.BR ; Syensqo
+ELI.BR   ; Elia
+LOTB.BR  ; Lotus Bakeries
+AZE.BR   ; Azelis
+GBLB.BR  ; GBL
+UMI.BR   ; Umicore
+PROX.BR  ; Proximus
+MELE.BR  ; Melexis
+BAR.BR   ; Barco
+
+# === 4. Grandes valeurs europeennes hors Euronext : ordre minimal de 2 500 EUR en PEA
+# Couronne danoise (.CO) : arrimee a l'euro, variations donnees en couronnes.
+# Ajout du 03/10/2026 :
+MUV2.DE   ; Munich Re
+ALV.DE    ; Allianz
+SAP.DE    ; SAP
+HNR1.DE   ; Hannover Re
+DB1.DE    ; Deutsche Börse
+SIE.DE    ; Siemens
+FPE3.DE   ; Fuchs
+SY1.DE    ; Symrise
+NOVO-B.CO ; Novo Nordisk
+COLO-B.CO ; Coloplast
+ITX.MC    ; Inditex
+IBE.MC    ; Iberdrola
+G.MI      ; Generali
+TRN.MI    ; Terna
+KNEBV.HE  ; Kone
+SAMPO.HE  ; Sampo
+KRZ.IR    ; Kerry Group
+# Ajout du 20/11/2026 (reste de l'Euro Stoxx 50 et grandes valeurs voisines) :
+ADS.DE    ; Adidas
+BAS.DE    ; BASF
+BAYN.DE   ; Bayer
+BMW.DE    ; BMW
+MBG.DE    ; Mercedes-Benz
+VOW3.DE   ; Volkswagen (préf.)
+DBK.DE    ; Deutsche Bank
+CBK.DE    ; Commerzbank
+DTE.DE    ; Deutsche Telekom
+DHL.DE    ; DHL Group
+IFX.DE    ; Infineon
+RHM.DE    ; Rheinmetall
+HAG.DE    ; Hensoldt
+MTX.DE    ; MTU Aero Engines
+ENR.DE    ; Siemens Energy
+SHL.DE    ; Siemens Healthineers
+HEN3.DE   ; Henkel (préf.)
+BEI.DE    ; Beiersdorf
+ENEL.MI   ; Enel
+ENI.MI    ; Eni
+ISP.MI    ; Intesa Sanpaolo
+UCG.MI    ; UniCredit
+RACE.MI   ; Ferrari
+LDO.MI    ; Leonardo
+PRY.MI    ; Prysmian
+MONC.MI   ; Moncler
+PST.MI    ; Poste Italiane
+SAN.MC    ; Santander
+BBVA.MC   ; BBVA
+CABK.MC   ; CaixaBank
+AMS.MC    ; Amadeus
+AENA.MC   ; Aena
+REP.MC    ; Repsol
+NDA-FI.HE ; Nordea
+NESTE.HE  ; Neste
+UPM.HE    ; UPM-Kymmene
+KRX.IR    ; Kingspan
+A5G.IR    ; AIB Group
+BIRG.IR   ; Bank of Ireland
+EDP.LS    ; EDP
+JMT.LS    ; Jerónimo Martins
+DSV.CO    ; DSV
+VWS.CO    ; Vestas
+
+# === 5. Petites et moyennes valeurs francaises hors SBF 120 (20/11/2026)
+WAVE.PA  ; Wavestone
+LBIRD.PA ; Lumibird
+MTU.PA   ; Manitou
+BEN.PA   ; Bénéteau
+AUB.PA   ; Aubay
+BOI.PA   ; Boiron
+SII.PA   ; SII
+INF.PA   ; Infotel
+SWP.PA   ; Sword Group
+CRI.PA   ; Chargeurs
+GBT.PA   ; Guerbet
+BON.PA   ; Bonduelle
+SAVE.PA  ; Savencia
+SDG.PA   ; Synergie
+CEN.PA   ; Groupe Crit
+LPE.PA   ; Laurent-Perrier
+LAN.PA   ; Lanson-BCC
+VRAP.PA  ; Vranken-Pommery
+JCQ.PA   ; Jacquet Metals
+FNAC.PA  ; Fnac Darty
+PIG.PA   ; Haulotte
+CATG.PA  ; Catana Group
+ALFPC.PA ; Fountaine Pajot
+HCO.PA   ; High Co
+QDT.PA   ; Quadient
+AKW.PA   ; Akwel
+GLO.PA   ; GL events
+KOF.PA   ; Kaufman & Broad
+ES.PA    ; Esso
+VAC.PA   ; Pierre & Vacances
+LTA.PA   ; Altamir
+ARAMI.PA ; Aramis Group
+DLTA.PA  ; Delta Plus
+BLC.PA   ; Bastide
+SAMS.PA  ; Samse
+CDA.PA   ; Compagnie des Alpes
+BUR.PA   ; Burelle
+MDM.PA   ; Maisons du Monde
