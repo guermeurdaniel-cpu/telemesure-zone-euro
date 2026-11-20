@@ -7,7 +7,7 @@ Dependance : yfinance.
 
 Deux familles de series dans data.json :
 
-  - mk = true  : valeur de l'univers classe (liste UNIVERS ci-dessous). La page
+  - mk = true  : valeur de l'univers classe (fichier univers.txt). La page
                  calcule elle-meme les 5 plus fortes hausses et les 5 plus fortes
                  baisses sur la fenetre choisie au curseur (1 a 6 mois).
   - pf = "PEG" / "PEA" / "AV" : ligne du portefeuille. Ces lignes ne sont PAS
@@ -40,187 +40,42 @@ from datetime import date, datetime, timedelta, timezone
 import yfinance as yf
 
 # ----------------------------------------------------------------------------
-# UNIVERS CLASSE
-# Trois blocs, tous eligibles au PEA :
-#   1. Grandes et moyennes valeurs de la Bourse de Paris : le SBF 120 hors
-#      foncieres cotees (les SIIC ne sont pas eligibles au PEA).
-#   2. Quelques valeurs francaises hors SBF 120 connues pour la regularite de
-#      leur dividende.
-#   3. Une selection de valeurs europeennes a dividende regulier ou croissant
-#      (siege dans l'Union europeenne). Celles cotees a Amsterdam et Bruxelles
-#      suivent le tarif Euronext habituel ; pour les autres places, la brochure
-#      BoursoBank impose un ordre minimal de 2 500 EUR dans un PEA, et la page le
-#      rappelle dans la legende. Les deux valeurs danoises cotent en couronnes,
-#      monnaie arrimee a l'euro.
-# LISTE FIGEE, ecrite a la main le 03/10/2026 : la composition de l'indice est
-# revue chaque trimestre (mars, juin, septembre, decembre), il faut donc la
-# relire de temps en temps. Elle n'a pas besoin d'etre exacte a la valeur pres :
-# elle sert de vivier pour le classement.
+# UNIVERS CLASSE : lu dans le fichier univers.txt a la racine du depot.
+# Une ligne par valeur, "TICKER ; Nom". Ajouter ou retirer une valeur se fait
+# la-bas, et nulle part ailleurs (voir l'en-tete de univers.txt pour les regles
+# d'eligibilite au PEA). historique.py importe UNIVERS d'ici.
 # Un ticker que Yahoo ne reconnait plus est signale dans data.json (cle
 # "echecs") et dans la barre d'etat de la page, sans bloquer le reste.
-# (ticker Yahoo, nom affiche)
 # ----------------------------------------------------------------------------
-UNIVERS = [
-    ("AC.PA",    "Accor"),
-    ("ADP.PA",   "Aéroports de Paris"),
-    ("AF.PA",    "Air France-KLM"),
-    ("AI.PA",    "Air Liquide"),
-    ("AIR.PA",   "Airbus"),
-    ("ALO.PA",   "Alstom"),
-    ("ATE.PA",   "Alten"),
-    ("AMUN.PA",  "Amundi"),
-    ("ANTIN.PA", "Antin Infrastructure"),
-    ("APAM.AS",  "Aperam"),                 # Amsterdam, droit luxembourgeois
-    ("MT.AS",    "ArcelorMittal"),          # Amsterdam, droit luxembourgeois
-    ("AKE.PA",   "Arkema"),
-    ("ATO.PA",   "Atos"),
-    ("CS.PA",    "AXA"),
-    ("AYV.PA",   "Ayvens"),
-    ("BB.PA",    "Bic"),
-    ("BIM.PA",   "bioMérieux"),
-    ("BNP.PA",   "BNP Paribas"),
-    ("BOL.PA",   "Bolloré"),
-    ("EN.PA",    "Bouygues"),
-    ("BVI.PA",   "Bureau Veritas"),
-    ("CAP.PA",   "Capgemini"),
-    ("CA.PA",    "Carrefour"),
-    ("CLARI.PA", "Clariane"),
-    ("COFA.PA",  "Coface"),
-    ("ACA.PA",   "Crédit Agricole"),
-    ("BN.PA",    "Danone"),
-    ("AM.PA",    "Dassault Aviation"),
-    ("DSY.PA",   "Dassault Systèmes"),
-    ("DBG.PA",   "Derichebourg"),
-    ("EDEN.PA",  "Edenred"),
-    ("FGR.PA",   "Eiffage"),
-    ("ELIOR.PA", "Elior"),
-    ("ELIS.PA",  "Elis"),
-    ("EMEIS.PA", "Emeis"),
-    ("ENGI.PA",  "Engie"),
-    ("ERA.PA",   "Eramet"),
-    ("EL.PA",    "EssilorLuxottica"),
-    ("RF.PA",    "Eurazeo"),
-    ("ERF.PA",   "Eurofins Scientific"),
-    ("ENX.PA",   "Euronext"),
-    ("ETL.PA",   "Eutelsat"),
-    ("EXA.PA",   "Exail Technologies"),
-    ("EXENS.PA", "Exosens"),
-    ("FDJU.PA",  "FDJ United"),
-    ("FRVIA.PA", "Forvia"),
-    ("GTT.PA",   "GTT"),
-    ("GNFT.PA",  "Genfit"),
-    ("GET.PA",   "Getlink"),
-    ("RMS.PA",   "Hermès"),
-    ("IDL.PA",   "ID Logistics"),
-    ("NK.PA",    "Imerys"),
-    ("ITP.PA",   "Interparfums"),
-    ("IPN.PA",   "Ipsen"),
-    ("IPS.PA",   "Ipsos"),
-    ("DEC.PA",   "JCDecaux"),
-    ("KER.PA",   "Kering"),
-    ("OR.PA",    "L'Oréal"),
-    ("LSS.PA",   "Lectra"),
-    ("LR.PA",    "Legrand"),
-    ("FII.PA",   "Lisi"),
-    ("MC.PA",    "LVMH"),
-    ("MMT.PA",   "M6 Métropole TV"),
-    ("MAU.PA",   "Maurel & Prom"),
-    ("MEDCL.PA", "Medincell"),
-    ("MRN.PA",   "Mersen"),
-    ("ML.PA",    "Michelin"),
-    ("NANO.PA",  "Nanobiotix"),
-    ("NEX.PA",   "Nexans"),
-    ("NXI.PA",   "Nexity"),
-    ("OPM.PA",   "OPmobility"),
-    ("ORA.PA",   "Orange"),
-    ("OVH.PA",   "OVHcloud"),
-    ("RI.PA",    "Pernod Ricard"),
-    ("PLNW.PA",  "Planisware"),
-    ("PLX.PA",   "Pluxee"),
-    ("PUB.PA",   "Publicis"),
-    ("RCO.PA",   "Rémy Cointreau"),
-    ("RNO.PA",   "Renault"),
-    ("RXL.PA",   "Rexel"),
-    ("RUI.PA",   "Rubis"),
-    ("SAF.PA",   "Safran"),
-    ("SGO.PA",   "Saint-Gobain"),
-    ("SAN.PA",   "Sanofi"),
-    ("DIM.PA",   "Sartorius Stedim"),
-    ("SU.PA",    "Schneider Electric"),
-    ("SCR.PA",   "Scor"),
-    ("SK.PA",    "SEB"),
-    ("SESG.PA",  "SES"),
-    ("GLE.PA",   "Société Générale"),
-    ("SW.PA",    "Sodexo"),
-    ("SOI.PA",   "Soitec"),
-    ("SOLB.BR",  "Solvay"),                 # Bruxelles
-    ("SOP.PA",   "Sopra Steria"),
-    ("SPIE.PA",  "Spie"),
-    ("STLAP.PA", "Stellantis"),
-    ("STMPA.PA", "STMicroelectronics"),
-    ("TE.PA",    "Technip Energies"),
-    ("TEP.PA",   "Teleperformance"),
-    ("TFI.PA",   "TF1"),
-    ("HO.PA",    "Thales"),
-    ("TKO.PA",   "Tikehau Capital"),
-    ("TTE.PA",   "TotalEnergies"),
-    ("TRI.PA",   "Trigano"),
-    ("UBI.PA",   "Ubisoft"),
-    ("FR.PA",    "Valeo"),
-    ("VK.PA",    "Vallourec"),
-    ("VLA.PA",   "Valneva"),
-    ("VIE.PA",   "Veolia"),
-    ("VRLA.PA",  "Verallia"),
-    ("VCT.PA",   "Vicat"),
-    ("DG.PA",    "Vinci"),
-    ("VIRP.PA",  "Virbac"),
-    ("VIRI.PA",  "Viridien"),
-    ("VIV.PA",   "Vivendi"),
-    ("VU.PA",    "VusionGroup"),
-    ("MF.PA",    "Wendel"),
-    ("WLN.PA",   "Worldline"),
-    ("XFAB.PA",  "X-Fab"),
-    ("ABVX.PA",  "Abivax"),
-    # --- bloc 2 : valeurs francaises hors SBF 120, dividende regulier (ajout 03/10/2026) ---
-    ("EQS.PA",   "Equasens"),
-    ("RBT.PA",   "Robertet"),
-    ("LOUP.PA",  "LDC"),
-    ("THEP.PA",  "Thermador"),
-    ("VETO.PA",  "Vetoquinol"),
-    ("NRO.PA",   "Neurones"),
-    ("STF.PA",   "Stef"),
-    # --- bloc 3 : valeurs europeennes, Euronext Amsterdam et Bruxelles (ajout 03/10/2026) ---
-    ("WKL.AS",   "Wolters Kluwer"),
-    ("ASML.AS",  "ASML"),
-    ("AD.AS",    "Ahold Delhaize"),
-    ("HEIA.AS",  "Heineken"),
-    ("ASRNL.AS", "ASR Nederland"),
-    ("UCB.BR",   "UCB"),
-    ("KBC.BR",   "KBC"),
-    ("ACKB.BR",  "Ackermans & van Haaren"),
-    ("SOF.BR",   "Sofina"),
-    ("AGS.BR",   "Ageas"),
-    ("DIE.BR",   "D'Ieteren"),
-    # --- bloc 3 : valeurs europeennes hors Euronext, ordre minimal de 2 500 EUR en PEA ---
-    ("MUV2.DE",  "Munich Re"),              # Francfort
-    ("ALV.DE",   "Allianz"),
-    ("SAP.DE",   "SAP"),
-    ("HNR1.DE",  "Hannover Re"),
-    ("DB1.DE",   "Deutsche Börse"),
-    ("SIE.DE",   "Siemens"),
-    ("FPE3.DE",  "Fuchs"),
-    ("SY1.DE",   "Symrise"),
-    ("NOVO-B.CO", "Novo Nordisk"),          # Copenhague, en couronnes danoises
-    ("COLO-B.CO", "Coloplast"),             # Copenhague, en couronnes danoises
-    ("ITX.MC",   "Inditex"),                # Madrid
-    ("IBE.MC",   "Iberdrola"),
-    ("G.MI",     "Generali"),               # Milan
-    ("TRN.MI",   "Terna"),
-    ("KNEBV.HE", "Kone"),                   # Helsinki
-    ("SAMPO.HE", "Sampo"),
-    ("KRZ.IR",   "Kerry Group"),            # Dublin
-]
-UNIVERS_LIBELLE = "SBF 120 hors foncières et sélection européenne à dividende régulier, liste figée au 03/10/2026"
+FICHIER_UNIVERS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "univers.txt")
+
+
+def lire_univers(chemin=FICHIER_UNIVERS):
+    """Renvoie la liste des (ticker, nom) de univers.txt, dans l'ordre du fichier.
+    Un ticker en double n'est garde qu'une fois (premiere occurrence)."""
+    vus, liste = set(), []
+    with open(chemin, encoding="utf-8") as f:
+        for n, brute in enumerate(f, 1):
+            ligne = brute.split("#", 1)[0].strip()
+            if not ligne:
+                continue
+            if ";" not in ligne:
+                raise ValueError(f"univers.txt ligne {n} : separateur ';' absent : {brute.strip()}")
+            tk, nom = (p.strip() for p in ligne.split(";", 1))
+            if not tk or not nom:
+                raise ValueError(f"univers.txt ligne {n} : ticker ou nom vide")
+            if tk in vus:
+                print(f"univers.txt ligne {n} : {tk} en double, ignore")
+                continue
+            vus.add(tk)
+            liste.append((tk, nom))
+    return liste
+
+
+UNIVERS = lire_univers()
+UNIVERS_LIBELLE = ("SBF 120 hors foncières, petites et moyennes valeurs françaises "
+                   "et grandes valeurs européennes éligibles au PEA (univers.txt, "
+                   f"{len(UNIVERS)} valeurs)")
 
 # ----------------------------------------------------------------------------
 # PORTEFEUILLE : lu dans le depot mes-actions (public).
