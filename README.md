@@ -6,7 +6,7 @@ Page refondue le 3 octobre 2026 : les anciens onglets Paniers et Valeurs ont dis
 ## Ce que montre la page
 
 - **Les cinq plus fortes hausses et les cinq plus fortes baisses** parmi environ
-  150 valeurs françaises et européennes éligibles au PEA, sur une fenêtre de
+  270 valeurs françaises et européennes éligibles au PEA, sur une fenêtre de
   **1 à 6 mois** réglée au curseur. Le classement est recalculé dans la page à chaque
   position du curseur : les dix valeurs affichées changent avec la fenêtre.
 - **Les lignes du portefeuille**, tracées en trait plus épais.
@@ -32,37 +32,52 @@ Deux vues, par le sélecteur du haut :
 
 Un seul script, `scripts/fetch_data.py`, lancé par le workflow
 `.github/workflows/update.yml` : chaque jour ouvré à 06:00 UTC, à la main (Run
-workflow), et à chaque modification du script. Il écrit `data.json` (environ
-460 ko : six mois de cours pour chaque série).
+workflow), et à chaque modification du script ou de `univers.txt`. Il écrit `data.json` (environ
+750 ko : six mois de cours pour chaque série).
 
 ### L'univers classé
 
-Trois blocs, tous éligibles au PEA, dans la liste `UNIVERS` en tête du script :
+Environ 270 valeurs, toutes éligibles au PEA, listées dans le fichier **`univers.txt`**
+à la racine du dépôt (une ligne par valeur : `TICKER ; Nom`). C'est le seul endroit à
+modifier pour ajouter ou retirer une valeur ; `fetch_data.py` et `historique.py` le
+lisent tous les deux. Une modification de `univers.txt` relance aussitôt la mise à
+jour des cours.
+
+Cinq blocs, décrits dans l'en-tête du fichier :
 
 1. **Le SBF 120 hors foncières cotées** (les SIIC ne sont pas éligibles au PEA).
-2. **Quelques valeurs françaises hors SBF 120** connues pour la régularité de leur
-   dividende : Equasens, Robertet, LDC, Thermador, Vetoquinol, Neurones, Stef.
-3. **Une sélection européenne** à dividende régulier ou croissant, ajoutée le
-   3 octobre 2026 : Wolters Kluwer, ASML, Ahold Delhaize, Heineken, ASR Nederland,
-   UCB, KBC, Ackermans & van Haaren, Sofina, Ageas, D'Ieteren (Amsterdam et
-   Bruxelles), puis Munich Re, Allianz, SAP, Hannover Re, Deutsche Börse, Siemens,
-   Fuchs, Symrise, Novo Nordisk, Coloplast, Inditex, Iberdrola, Generali, Terna,
-   Kone, Sampo et Kerry Group.
+2. **Quelques valeurs françaises hors SBF 120** à dividende régulier : Equasens,
+   Robertet, LDC, Thermador, Vetoquinol, Neurones, Stef.
+3. **Valeurs étrangères cotées à Paris, Amsterdam ou Bruxelles** (tarif Euronext
+   normal) : la sélection du 3 octobre 2026, élargie le 20 novembre 2026 aux grandes
+   valeurs d'Amsterdam et Bruxelles (ASM International, BESI, Adyen, ING, Philips,
+   Prosus, AB InBev, argenx…) et à Nokia, cotée à Paris.
+4. **Grandes valeurs européennes hors Euronext** (ordre minimal de 2 500 €) : la
+   sélection du 3 octobre 2026, élargie le 20 novembre 2026 au reste de l'Euro
+   Stoxx 50 et à de grandes valeurs voisines (Infineon, Rheinmetall, Deutsche
+   Telekom, Enel, Intesa Sanpaolo, Ferrari, Santander, Nordea, Kingspan, EDP…).
+5. **Petites et moyennes valeurs françaises hors SBF 120**, ajoutées le
+   20 novembre 2026 (Wavestone, Lumibird, Manitou, Bénéteau, Aubay, Boiron…).
 
-La liste est **figée à la main** à la date du 3 octobre 2026. Le SBF 120 étant revu
-chaque trimestre, elle est à relire de temps en temps. Elle n'a pas besoin d'être
-exacte à la valeur près : elle sert de vivier.
+La liste est écrite à la main. Le SBF 120 étant revu chaque trimestre, elle est à
+relire de temps en temps. Elle n'a pas besoin d'être exacte à la valeur près : elle
+sert de vivier.
 
-Pour ajouter ou retirer une valeur : une ligne `("TICKER.PA", "Nom")` dans `UNIVERS`.
+Règles d'éligibilité à respecter pour tout ajout : siège dans l'Union européenne ou
+l'EEE, société soumise à l'impôt sur les sociétés. Donc ni foncières (SIIC, SIR
+belges…), ni sociétés au siège hors UE même cotées à Paris ou Amsterdam (Shell,
+Unilever, Aegon…).
+
 Suffixes Yahoo : `.PA` Paris, `.AS` Amsterdam, `.BR` Bruxelles, `.DE` Francfort,
-`.CO` Copenhague, `.MC` Madrid, `.MI` Milan, `.HE` Helsinki, `.IR` Dublin.
+`.CO` Copenhague, `.MC` Madrid, `.MI` Milan, `.HE` Helsinki, `.IR` Dublin,
+`.LS` Lisbonne.
 
 Deux points propres aux valeurs européennes :
 
 - **Ordre minimal.** Hors Paris, Amsterdam et Bruxelles, la brochure BoursoBank
   impose un ordre minimal de 2 500 € dans un PEA. La page l'indique dans la légende
   par la mention « min. 2 500 € », déduite du suffixe du ticker.
-- **Devise.** Les deux valeurs danoises cotent en couronnes, monnaie arrimée à
+- **Devise.** Les valeurs danoises cotent en couronnes, monnaie arrimée à
   l'euro : leur variation est donnée en couronnes. Aucune valeur en couronnes
   suédoises ou norvégiennes n'a été retenue, pour ne pas mélanger un effet de change.
 
@@ -103,7 +118,8 @@ La page n'utilise pas ce dossier. Il sert aux essais de stratégies menés à pa
 
 - `scripts/historique.py`, lancé par `.github/workflows/analyse.yml` : **uniquement à
   la main** (Actions > Analyse historique > Run workflow) ou quand ce script est
-  modifié. Jamais de passage automatique.
+  modifié. Jamais de passage automatique. Après un ajout dans `univers.txt`, le
+  relancer à la main pour que les nouvelles valeurs entrent dans ces fichiers.
 - `analyse/historique.json` (environ 8,6 Mo) : cours quotidiens ajustés depuis 2010 et
   historique des dividendes versés, pour tout l'univers et trois témoins (deux ETF
   MSCI World et le CAC 40). La profondeur se règle par la constante `DEBUT` du script.
