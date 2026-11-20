@@ -6,7 +6,7 @@ Page refondue le 3 octobre 2026 : les anciens onglets Paniers et Valeurs ont dis
 ## Ce que montre la page
 
 - **Les cinq plus fortes hausses et les cinq plus fortes baisses** parmi environ
-  270 valeurs françaises et européennes éligibles au PEA, sur une fenêtre de
+  260 valeurs françaises et européennes éligibles au PEA, sur une fenêtre de
   **1 à 6 mois** réglée au curseur. Le classement est recalculé dans la page à chaque
   position du curseur : les dix valeurs affichées changent avec la fenêtre.
 - **Les lignes du portefeuille**, tracées en trait plus épais.
@@ -33,11 +33,11 @@ Deux vues, par le sélecteur du haut :
 Un seul script, `scripts/fetch_data.py`, lancé par le workflow
 `.github/workflows/update.yml` : chaque jour ouvré à 06:00 UTC, à la main (Run
 workflow), et à chaque modification du script ou de `univers.txt`. Il écrit `data.json` (environ
-750 ko : six mois de cours pour chaque série).
+800 ko : six mois de cours pour chaque série).
 
 ### L'univers classé
 
-Environ 270 valeurs, toutes éligibles au PEA, listées dans le fichier **`univers.txt`**
+Environ 260 valeurs, toutes éligibles au PEA, listées dans le fichier **`univers.txt`**
 à la racine du dépôt (une ligne par valeur : `TICKER ; Nom`). C'est le seul endroit à
 modifier pour ajouter ou retirer une valeur ; `fetch_data.py` et `historique.py` le
 lisent tous les deux. Une modification de `univers.txt` relance aussitôt la mise à
@@ -51,11 +51,11 @@ Cinq blocs, décrits dans l'en-tête du fichier :
 3. **Valeurs étrangères cotées à Paris, Amsterdam ou Bruxelles** (tarif Euronext
    normal) : la sélection du 3 octobre 2026, élargie le 20 novembre 2026 aux grandes
    valeurs d'Amsterdam et Bruxelles (ASM International, BESI, Adyen, ING, Philips,
-   Prosus, AB InBev, argenx…) et à Nokia, cotée à Paris.
+   Prosus, AB InBev, argenx…).
 4. **Grandes valeurs européennes hors Euronext** (ordre minimal de 2 500 €) : la
    sélection du 3 octobre 2026, élargie le 20 novembre 2026 au reste de l'Euro
    Stoxx 50 et à de grandes valeurs voisines (Infineon, Rheinmetall, Deutsche
-   Telekom, Enel, Intesa Sanpaolo, Ferrari, Santander, Nordea, Kingspan, EDP…).
+   Telekom, Enel, Intesa Sanpaolo, Ferrari, Santander, Nordea, Nokia, Kingspan, EDP…).
 5. **Petites et moyennes valeurs françaises hors SBF 120**, ajoutées le
    20 novembre 2026 (Wavestone, Lumibird, Manitou, Bénéteau, Aubay, Boiron…).
 
