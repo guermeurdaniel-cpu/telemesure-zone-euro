@@ -19,6 +19,9 @@
 #
 # Un ticker que Yahoo ne reconnait plus ne bloque rien : il apparait dans la cle
 # "echecs" de data.json et en rouge dans la barre d'etat de la page.
+# Retires le 20/11/2026 car inconnus de Yahoo : NOKIA.PA (remplace par NOKIA.HE),
+# FER.AS (remplace par FER.MC), CATG.PA (remplace par ALCAT.PA), SII.PA, LAN.PA,
+# VRAP.PA, ES.PA, DLTA.PA.
 
 # === 1. SBF 120 hors foncieres (liste relue le 03/10/2026, l'indice change chaque trimestre)
 AC.PA    ; Accor
@@ -165,7 +168,6 @@ SOF.BR   ; Sofina
 AGS.BR   ; Ageas
 DIE.BR   ; D'Ieteren
 # Ajout du 20/11/2026 :
-NOKIA.PA ; Nokia
 ASM.AS   ; ASM International
 BESI.AS  ; BE Semiconductor
 ADYEN.AS ; Adyen
@@ -181,7 +183,6 @@ IMCD.AS  ; IMCD
 RAND.AS  ; Randstad
 KPN.AS   ; KPN
 EXO.AS   ; Exor
-FER.AS   ; Ferrovial
 LIGHT.AS ; Signify
 ARCAD.AS ; Arcadis
 AALB.AS  ; Aalberts
@@ -250,10 +251,12 @@ SAN.MC    ; Santander
 BBVA.MC   ; BBVA
 CABK.MC   ; CaixaBank
 AMS.MC    ; Amadeus
+FER.MC    ; Ferrovial
 AENA.MC   ; Aena
 REP.MC    ; Repsol
 NDA-FI.HE ; Nordea
 NESTE.HE  ; Neste
+NOKIA.HE  ; Nokia
 UPM.HE    ; UPM-Kymmene
 KRX.IR    ; Kingspan
 A5G.IR    ; AIB Group
@@ -270,7 +273,6 @@ MTU.PA   ; Manitou
 BEN.PA   ; Bénéteau
 AUB.PA   ; Aubay
 BOI.PA   ; Boiron
-SII.PA   ; SII
 INF.PA   ; Infotel
 SWP.PA   ; Sword Group
 CRI.PA   ; Chargeurs
@@ -280,23 +282,19 @@ SAVE.PA  ; Savencia
 SDG.PA   ; Synergie
 CEN.PA   ; Groupe Crit
 LPE.PA   ; Laurent-Perrier
-LAN.PA   ; Lanson-BCC
-VRAP.PA  ; Vranken-Pommery
 JCQ.PA   ; Jacquet Metals
 FNAC.PA  ; Fnac Darty
 PIG.PA   ; Haulotte
-CATG.PA  ; Catana Group
+ALCAT.PA ; Catana Group
 ALFPC.PA ; Fountaine Pajot
 HCO.PA   ; High Co
 QDT.PA   ; Quadient
 AKW.PA   ; Akwel
 GLO.PA   ; GL events
 KOF.PA   ; Kaufman & Broad
-ES.PA    ; Esso
 VAC.PA   ; Pierre & Vacances
 LTA.PA   ; Altamir
 ARAMI.PA ; Aramis Group
-DLTA.PA  ; Delta Plus
 BLC.PA   ; Bastide
 SAMS.PA  ; Samse
 CDA.PA   ; Compagnie des Alpes
