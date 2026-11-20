@@ -6,7 +6,7 @@ on:
   workflow_dispatch:          # bouton "Run workflow" manuel
   push:
     branches: [ main ]
-    paths: [ 'scripts/fetch_data.py' ]
+    paths: [ 'scripts/fetch_data.py', 'univers.txt' ]
 
 permissions:
   contents: write
