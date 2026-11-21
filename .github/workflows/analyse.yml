@@ -1,14 +1,18 @@
 name: Analyse historique
 
 # Etude hors ligne : 5 ans de cours et de dividendes pour l'univers suivi, plus
-# quelques fondamentaux. Ne tourne jamais tout seul : uniquement a la main, ou
-# quand scripts/historique.py est modifie. La page n'utilise pas ces fichiers.
+# quelques fondamentaux (analyse/fondamentaux.json, lu chaque jour par la veille
+# de mes-actions pour juger les bonnes affaires). Tourne tout seul le 1er de
+# chaque mois a 04:00 UTC, pour que la revue mensuelle du 5 parte de donnees
+# fraiches ; aussi a la main, ou quand le script ou ce workflow est modifie.
 
 on:
+  schedule:
+    - cron: '0 4 1 * *'
   workflow_dispatch:
   push:
     branches: [ main ]
-    paths: [ 'scripts/historique.py' ]
+    paths: [ 'scripts/historique.py', '.github/workflows/analyse.yml' ]
 
 permissions:
   contents: write
@@ -40,6 +44,8 @@ jobs:
             echo "Aucun changement."
           else
             git commit -m "analyse : historique et fondamentaux $(date -u +%Y-%m-%dT%H:%MZ)"
-            git pull --rebase
-            git push
+            for i in 1 2 3; do
+              git pull --rebase && git push && break
+              sleep 10
+            done
           fi
