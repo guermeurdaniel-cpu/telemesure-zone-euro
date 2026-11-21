@@ -213,6 +213,8 @@ def build():
     limite = date.today() - timedelta(days=JOURS_VL)
     for l in lignes:
         cle, nom = l["cle"], l["intitule"]
+        if l.get("source") == "fixe":
+            continue        # livret (valeur fixe, 1 part = 1 EUR) : aucune courbe a tracer
         if l.get("source") == "yahoo":
             if cle not in noms:
                 ajoute_cotee(cle, nom, False)
